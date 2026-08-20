@@ -6,6 +6,7 @@ import 'package:gemma_fitness/data/repositories/workout_repository.dart';
 import 'package:gemma_fitness/data/repositories/workout_template_repository.dart';
 import 'package:gemma_fitness/data/services/exercise_sync_service.dart';
 import 'package:gemma_fitness/data/services/gemini_exercise_service.dart';
+import 'package:gemma_fitness/data/services/gemini_workout_service.dart';
 import 'package:gemma_fitness/main.dart';
 import 'package:gemma_fitness/ui/features/exercise_admin/view_models/exercise_admin_view_model.dart';
 import 'package:gemma_fitness/ui/features/workout_tracker/view_models/active_workout_view_model.dart';
@@ -22,12 +23,13 @@ void main() {
     final workoutRepo = WorkoutRepository(db);
     final templateRepo = WorkoutTemplateRepository();
     final syncService = ExerciseSyncService(exerciseRepository: exerciseRepo);
-    final geminiService = GeminiExerciseService(apiKey: 'test');
+    final geminiExerciseService = GeminiExerciseService(apiKey: 'test');
+    final geminiWorkoutService = GeminiWorkoutService(apiKey: 'test');
 
     final adminViewModel = ExerciseAdminViewModel(
       exerciseRepository: exerciseRepo,
       syncService: syncService,
-      geminiService: geminiService,
+      geminiService: geminiExerciseService,
     );
 
     final activeWorkoutViewModel = ActiveWorkoutViewModel(
@@ -51,13 +53,14 @@ void main() {
       exerciseRepository: exerciseRepo,
       database: db,
       workoutRepository: workoutRepo,
+      aiService: geminiWorkoutService,
     ));
 
     await tester.pumpAndSettle();
 
-    // Verify initial Workout tab is rendered with presets
+    // Verify initial Workout tab is rendered with AI generator and routines
     expect(find.text('Ready to Train?'), findsOneWidget);
-    expect(find.text('Quick Empty Session'), findsOneWidget);
+    expect(find.text('AI Routine Generator'), findsOneWidget);
     expect(find.text('Workout Routines'), findsOneWidget);
 
     await db.close();

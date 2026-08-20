@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/exercise_repository.dart';
 import '../../../../domain/models/active_workout_models.dart';
+import '../../../../domain/services/workout_ai_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/phase_badge.dart';
 import '../../exercise_admin/views/exercise_edit_dialog.dart';
 import '../view_models/active_workout_view_model.dart';
 import '../view_models/workout_templates_view_model.dart';
+import 'ai_workout_generator_dialog.dart';
 import 'exercise_picker_dialog.dart';
 import 'workout_detail_dialog.dart';
 import 'workout_routine_editor_dialog.dart';
@@ -18,11 +20,13 @@ class ActiveWorkoutView extends StatefulWidget {
     required this.viewModel,
     required this.exerciseRepository,
     required this.templatesViewModel,
+    required this.aiService,
   });
 
   final ActiveWorkoutViewModel viewModel;
   final ExerciseRepository exerciseRepository;
   final WorkoutTemplatesViewModel templatesViewModel;
+  final WorkoutAiService aiService;
 
   @override
   State<ActiveWorkoutView> createState() => _ActiveWorkoutViewState();
@@ -73,69 +77,106 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Ready to Train?',
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Select a routine to inspect exercises, customize reps, or start immediately.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Row(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWideHeader = constraints.maxWidth > 850;
+
+                    final titleCol = const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
+                        Text(
+                          'Ready to Train?',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Select a routine to inspect exercises, customize reps, or start immediately.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    );
+
+                    final actionButtons = Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.accent,
+                            foregroundColor: const Color(0xFF0F172A),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                          onPressed: _openAiGenerator,
+                          icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                          label: const Text(
+                            'AI Routine Generator',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                           onPressed: _createNewRoutine,
-                          icon: const Icon(Icons.playlist_add_rounded, size: 20),
+                          icon: const Icon(Icons.playlist_add_rounded, size: 18),
                           label: const Text('New Routine'),
                         ),
-                        const SizedBox(width: 10),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
                             foregroundColor: const Color(0xFF0F172A),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 18, vertical: 14),
+                                horizontal: 16, vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           onPressed: () => vm.startBlankWorkout(),
-                          icon: const Icon(Icons.add_rounded, size: 20),
+                          icon: const Icon(Icons.add_rounded, size: 18),
                           label: const Text(
-                            'Quick Empty Session',
+                            'Empty Session',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
-                    ),
-                  ],
+                    );
+
+                    if (isWideHeader) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(child: titleCol),
+                          const SizedBox(width: 12),
+                          actionButtons,
+                        ],
+                      );
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        titleCol,
+                        const SizedBox(height: 14),
+                        actionButtons,
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -318,6 +359,18 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
     if (newPreset != null) {
       await widget.templatesViewModel.saveTemplate(newPreset);
     }
+  }
+
+  void _openAiGenerator() {
+    AiWorkoutGeneratorDialog.show(
+      context,
+      aiService: widget.aiService,
+      exerciseRepository: widget.exerciseRepository,
+      templatesViewModel: widget.templatesViewModel,
+      onStartWorkout: (selectedPreset) {
+        widget.viewModel.startWorkoutFromPreset(selectedPreset);
+      },
+    );
   }
 
   // -------------------------------------------------------------

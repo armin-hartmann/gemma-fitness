@@ -14,6 +14,12 @@ class ExerciseRepository {
         .getSingleOrNull();
   }
 
+  Future<Exercise?> getExerciseByName(String name) {
+    return (_db.select(_db.exercises)
+          ..where((tbl) => tbl.name.equals(name)))
+        .getSingleOrNull();
+  }
+
   Future<List<Exercise>> getExercisesByPhase(String phase) {
     return (_db.select(_db.exercises)
           ..where((tbl) => tbl.defaultPhase.equals(phase)))

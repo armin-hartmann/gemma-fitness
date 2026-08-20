@@ -5,7 +5,9 @@ import 'data/repositories/workout_repository.dart';
 import 'data/repositories/workout_template_repository.dart';
 import 'data/services/exercise_sync_service.dart';
 import 'data/services/gemini_exercise_service.dart';
+import 'data/services/gemini_workout_service.dart';
 import 'data/services/settings_service.dart';
+import 'domain/services/workout_ai_service.dart';
 import 'ui/core/navigation/app_shell.dart';
 import 'ui/core/theme/app_theme.dart';
 import 'ui/features/exercise_admin/view_models/exercise_admin_view_model.dart';
@@ -25,13 +27,14 @@ void main() {
   // Services
   final settingsService = SettingsService();
   final syncService = ExerciseSyncService(exerciseRepository: exerciseRepository);
-  final geminiService = GeminiExerciseService(settingsService: settingsService);
+  final geminiExerciseService = GeminiExerciseService(settingsService: settingsService);
+  final geminiWorkoutService = GeminiWorkoutService(settingsService: settingsService);
 
   // ViewModels
   final exerciseAdminViewModel = ExerciseAdminViewModel(
     exerciseRepository: exerciseRepository,
     syncService: syncService,
-    geminiService: geminiService,
+    geminiService: geminiExerciseService,
     settingsService: settingsService,
   );
 
@@ -56,6 +59,7 @@ void main() {
     exerciseRepository: exerciseRepository,
     database: database,
     workoutRepository: workoutRepository,
+    aiService: geminiWorkoutService,
   ));
 }
 
@@ -69,6 +73,7 @@ class GemmaFitnessApp extends StatelessWidget {
     required this.exerciseRepository,
     required this.database,
     required this.workoutRepository,
+    required this.aiService,
   });
 
   final ExerciseAdminViewModel exerciseAdminViewModel;
@@ -78,6 +83,7 @@ class GemmaFitnessApp extends StatelessWidget {
   final ExerciseRepository exerciseRepository;
   final AppDatabase database;
   final WorkoutRepository workoutRepository;
+  final WorkoutAiService aiService;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +97,7 @@ class GemmaFitnessApp extends StatelessWidget {
         workoutHistoryViewModel: workoutHistoryViewModel,
         workoutTemplatesViewModel: workoutTemplatesViewModel,
         exerciseRepository: exerciseRepository,
+        aiService: aiService,
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/repositories/exercise_repository.dart';
+import '../../../domain/services/workout_ai_service.dart';
 import '../../features/exercise_admin/view_models/exercise_admin_view_model.dart';
 import '../../features/exercise_admin/views/exercise_admin_view.dart';
 import '../../features/workout_tracker/view_models/active_workout_view_model.dart';
@@ -17,6 +18,7 @@ class AppShell extends StatefulWidget {
     required this.workoutHistoryViewModel,
     required this.workoutTemplatesViewModel,
     required this.exerciseRepository,
+    required this.aiService,
   });
 
   final ExerciseAdminViewModel exerciseAdminViewModel;
@@ -24,6 +26,7 @@ class AppShell extends StatefulWidget {
   final WorkoutHistoryViewModel workoutHistoryViewModel;
   final WorkoutTemplatesViewModel workoutTemplatesViewModel;
   final ExerciseRepository exerciseRepository;
+  final WorkoutAiService aiService;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -43,6 +46,7 @@ class _AppShellState extends State<AppShell> {
             viewModel: widget.activeWorkoutViewModel,
             exerciseRepository: widget.exerciseRepository,
             templatesViewModel: widget.workoutTemplatesViewModel,
+            aiService: widget.aiService,
           ),
           ExerciseAdminView(
             viewModel: widget.exerciseAdminViewModel,
