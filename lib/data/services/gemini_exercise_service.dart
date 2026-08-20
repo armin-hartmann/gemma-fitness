@@ -1,0 +1,114 @@
+import 'dart:convert';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import '../../domain/models/exercise_dto.dart';
+
+class GeminiExerciseService {
+  GeminiExerciseService({
+    String? apiKey,
+    this._modelName = 'gemini-2.5-flash',
+  }) : _apiKey = apiKey ?? const String.fromEnvironment('GEMINI_API_KEY');
+
+  final String _apiKey;
+  final String _modelName;
+
+  bool get isConfigured => _apiKey.trim().isNotEmpty;
+
+  /// Parses raw, unstructured text (e.g. workout notes, program PDFs, exercise lists)
+  /// into a structured list of [ExerciseDto] objects using Gemini.
+  Future<List<ExerciseDto>> parseExercisesFromRawText(
+    String rawText, {
+    String? overrideApiKey,
+  }) async {
+    final keyToUse = (overrideApiKey != null && overrideApiKey.trim().isNotEmpty)
+        ? overrideApiKey
+        : _apiKey;
+
+    if (keyToUse.trim().isEmpty) {
+      throw StateError(
+        'Gemini API key is not configured. Please supply an API key in settings or pass GEMINI_API_KEY.',
+      );
+    }
+
+    final model = GenerativeModel(
+      model: _modelName,
+      apiKey: keyToUse,
+      generationConfig: GenerationConfig(
+        responseMimeType: 'application/json',
+        temperature: 0.2,
+      ),
+      systemInstruction: Content.system('''
+You are an expert fitness database assistant. 
+Your job is to analyze unstructured fitness text, workout descriptions, routine notes, or exercise lists, and extract every exercise into a structured JSON array.
+
+Each item in the array MUST strictly have the following fields:
+- "name": String (clear, standard exercise name)
+- "category": String (e.g. "Strength", "Hypertrophy", "Mobility", "Cardio", "Core", "Plyometrics")
+- "primary_muscle": String (e.g. "Chest", "Upper Back", "Lats", "Quads", "Hamstrings", "Glutes", "Shoulders", "Biceps", "Triceps", "Abs", "Calves")
+- "equipment": String (e.g. "Barbell", "Dumbbell", "Bodyweight", "Cable", "Machine", "Kettlebell", "Resistance Band", "Foam Roller")
+- "instructions": String (concise setup, execution steps, and form cues)
+- "default_phase": String (strictly one of: "warmup", "working", "cooldown")
+
+Return a JSON array of objects.
+'''),
+    );
+
+    final prompt = '''
+Extract all exercises from the following text:
+
+---
+$rawText
+---
+''';
+
+    final response = await model.generateContent([Content.text(prompt)]);
+    final responseText = response.text;
+
+    if (responseText == null || responseText.trim().isEmpty) {
+      throw Exception('Empty response received from Gemini API.');
+    }
+
+    return parseExercisesFromJson(responseText);
+  }
+
+  /// Parses a JSON string containing either a list of exercises or a wrapper object.
+  List<ExerciseDto> parseExercisesFromJson(String jsonString) {
+    var cleaned = jsonString.trim();
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.substring(7);
+    }
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.substring(3);
+    }
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+    cleaned = cleaned.trim();
+
+    final dynamic decoded = jsonDecode(cleaned);
+
+    List<dynamic> items;
+    if (decoded is List) {
+      items = decoded;
+    } else if (decoded is Map<String, dynamic>) {
+      if (decoded['exercises'] is List) {
+        items = decoded['exercises'] as List;
+      } else if (decoded['data'] is List) {
+        items = decoded['data'] as List;
+      } else {
+        // Try to find any list in values
+        final firstList = decoded.values.firstWhere(
+          (v) => v is List,
+          orElse: () => [decoded],
+        );
+        items = firstList is List ? firstList : [decoded];
+      }
+    } else {
+      throw FormatException('Unexpected JSON structure from Gemini: $decoded');
+    }
+
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map((item) => ExerciseDto.fromJson(item))
+        .toList();
+  }
+}

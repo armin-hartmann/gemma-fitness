@@ -1,0 +1,236 @@
+import 'package:flutter/material.dart';
+import '../../../../data/database/app_database.dart';
+import '../../../../domain/models/exercise_dto.dart';
+import '../../../core/theme/app_theme.dart';
+
+class ExerciseEditDialog extends StatefulWidget {
+  const ExerciseEditDialog({
+    super.key,
+    this.initialExercise,
+  });
+
+  final Exercise? initialExercise;
+
+  static Future<ExerciseDto?> show(
+    BuildContext context, {
+    Exercise? initialExercise,
+  }) {
+    return showDialog<ExerciseDto>(
+      context: context,
+      builder: (ctx) => ExerciseEditDialog(initialExercise: initialExercise),
+    );
+  }
+
+  @override
+  State<ExerciseEditDialog> createState() => _ExerciseEditDialogState();
+}
+
+class _ExerciseEditDialogState extends State<ExerciseEditDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _categoryController;
+  late TextEditingController _muscleController;
+  late TextEditingController _equipmentController;
+  late TextEditingController _instructionsController;
+  late String _selectedPhase;
+
+  @override
+  void initState() {
+    super.initState();
+    final init = widget.initialExercise;
+    _nameController = TextEditingController(text: init?.name ?? '');
+    _categoryController =
+        TextEditingController(text: init?.category ?? 'Strength');
+    _muscleController =
+        TextEditingController(text: init?.primaryMuscle ?? 'Chest');
+    _equipmentController =
+        TextEditingController(text: init?.equipment ?? 'Barbell');
+    _instructionsController =
+        TextEditingController(text: init?.instructions ?? '');
+    _selectedPhase = init?.defaultPhase ?? 'working';
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _categoryController.dispose();
+    _muscleController.dispose();
+    _equipmentController.dispose();
+    _instructionsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = widget.initialExercise != null;
+
+    return Dialog(
+      backgroundColor: AppTheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 550),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isEditing ? 'Edit Exercise' : 'New Master Exercise',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded,
+                            color: AppTheme.textSecondary),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Exercise Name *',
+                      hintText: 'e.g. Incline Dumbbell Press',
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Name is required'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _categoryController,
+                          decoration: const InputDecoration(
+                            labelText: 'Category *',
+                            hintText: 'e.g. Strength / Hypertrophy',
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Category required'
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _muscleController,
+                          decoration: const InputDecoration(
+                            labelText: 'Primary Muscle *',
+                            hintText: 'e.g. Chest / Back',
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Muscle required'
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _equipmentController,
+                          decoration: const InputDecoration(
+                            labelText: 'Equipment *',
+                            hintText: 'e.g. Barbell / Dumbbell',
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Equipment required'
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedPhase,
+                          decoration: const InputDecoration(
+                            labelText: 'Default Phase',
+                          ),
+                          dropdownColor: AppTheme.surfaceElevated,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'warmup',
+                              child: Text('Warm-up'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'working',
+                              child: Text('Working'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'cooldown',
+                              child: Text('Cool-down'),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _selectedPhase = val);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _instructionsController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Instructions & Form Cues',
+                      hintText:
+                          'Setup, posture cues, range of motion, and breathing instructions...',
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: _submit,
+                        child: Text(isEditing ? 'Save Changes' : 'Create Exercise'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() ?? false) {
+      final dto = ExerciseDto(
+        id: widget.initialExercise?.id,
+        name: _nameController.text.trim(),
+        category: _categoryController.text.trim(),
+        primaryMuscle: _muscleController.text.trim(),
+        equipment: _equipmentController.text.trim(),
+        instructions: _instructionsController.text.trim().isEmpty
+            ? null
+            : _instructionsController.text.trim(),
+        defaultPhase: _selectedPhase,
+      );
+      Navigator.of(context).pop(dto);
+    }
+  }
+}
