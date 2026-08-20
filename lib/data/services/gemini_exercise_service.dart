@@ -7,7 +7,7 @@ class GeminiExerciseService {
   GeminiExerciseService({
     SettingsService? settingsService,
     this._apiKey,
-    this._modelName = 'gemini-2.5-flash',
+    this._modelName = 'gemini-3.6-flash',
   }) : _settingsService = settingsService ?? SettingsService();
 
   final SettingsService _settingsService;
