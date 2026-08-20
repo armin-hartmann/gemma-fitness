@@ -73,21 +73,45 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
         );
   }
 
+  Future<void> _updateItemSets(int exerciseIndex, int newSets) async {
+    final updatedList = List<PresetExerciseItem>.from(_preset.exercisePhases);
+    updatedList[exerciseIndex] =
+        updatedList[exerciseIndex].copyWith(targetSets: newSets);
+    final updatedPreset = _preset.copyWith(exercisePhases: updatedList);
+
+    setState(() => _preset = updatedPreset);
+    await widget.templatesViewModel.saveTemplate(updatedPreset);
+  }
+
+  Future<void> _updateItemReps(int exerciseIndex, int newReps) async {
+    final updatedList = List<PresetExerciseItem>.from(_preset.exercisePhases);
+    updatedList[exerciseIndex] =
+        updatedList[exerciseIndex].copyWith(targetReps: newReps);
+    final updatedPreset = _preset.copyWith(exercisePhases: updatedList);
+
+    setState(() => _preset = updatedPreset);
+    await widget.templatesViewModel.saveTemplate(updatedPreset);
+  }
+
+  Future<void> _updateItemWeight(int exerciseIndex, double? newWeight) async {
+    final updatedList = List<PresetExerciseItem>.from(_preset.exercisePhases);
+    updatedList[exerciseIndex] =
+        updatedList[exerciseIndex].copyWith(targetWeight: newWeight);
+    final updatedPreset = _preset.copyWith(exercisePhases: updatedList);
+
+    setState(() => _preset = updatedPreset);
+    await widget.templatesViewModel.saveTemplate(updatedPreset);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final warmupItems =
-        _preset.exercisePhases.where((e) => e.phase == 'warmup').toList();
-    final workingItems =
-        _preset.exercisePhases.where((e) => e.phase == 'working').toList();
-    final cooldownItems =
-        _preset.exercisePhases.where((e) => e.phase == 'cooldown').toList();
     final isHome = _preset.modality == 'bodyweight';
 
     return Dialog(
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 650, maxHeight: 750),
+        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 780),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -183,7 +207,7 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
                       border: Border.all(color: AppTheme.cardBorder),
                     ),
                     child: Text(
-                      '${_preset.exercisePhases.length} Exercises',
+                      '${_preset.exercisePhases.length} Exercises (Editable below)',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,
@@ -202,27 +226,23 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
                     ? const Center(
                         child: CircularProgressIndicator(color: AppTheme.primary),
                       )
-                    : ListView(
-                        children: [
-                          if (warmupItems.isNotEmpty) ...[
-                            _buildPhaseSectionHeader(
-                                '🔥 Warm-up Routine', AppTheme.phaseWarmup),
-                            ...warmupItems.map(_buildExerciseItemCard),
-                            const SizedBox(height: 14),
-                          ],
-                          if (workingItems.isNotEmpty) ...[
-                            _buildPhaseSectionHeader(
-                                '🏋️ Working Sets', AppTheme.phaseWorking),
-                            ...workingItems.map(_buildExerciseItemCard),
-                            const SizedBox(height: 14),
-                          ],
-                          if (cooldownItems.isNotEmpty) ...[
-                            _buildPhaseSectionHeader(
-                                '🧘 Cool-down Routine', AppTheme.phaseCooldown),
-                            ...cooldownItems.map(_buildExerciseItemCard),
-                            const SizedBox(height: 14),
-                          ],
-                        ],
+                    : ListView.builder(
+                        itemCount: _preset.exercisePhases.length,
+                        itemBuilder: (context, index) {
+                          final item = _preset.exercisePhases[index];
+                          final isFirstOfPhase = index == 0 ||
+                              _preset.exercisePhases[index - 1].phase !=
+                                  item.phase;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (isFirstOfPhase)
+                                _buildPhaseSectionHeader(item.phase),
+                              _buildInteractiveExerciseCard(index, item),
+                            ],
+                          );
+                        },
                       ),
               ),
               const SizedBox(height: 16),
@@ -237,8 +257,8 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
                           horizontal: 16, vertical: 12),
                     ),
                     onPressed: _openRoutineEditor,
-                    icon: const Icon(Icons.edit_note_rounded, size: 18),
-                    label: const Text('Edit Routine'),
+                    icon: const Icon(Icons.tune_rounded, size: 18),
+                    label: const Text('Routine Structure'),
                   ),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
@@ -272,9 +292,25 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
     );
   }
 
-  Widget _buildPhaseSectionHeader(String title, Color color) {
+  Widget _buildPhaseSectionHeader(String phase) {
+    String title;
+    Color color;
+    switch (phase) {
+      case 'warmup':
+        title = '🔥 Warm-up Routine';
+        color = AppTheme.phaseWarmup;
+        break;
+      case 'cooldown':
+        title = '🧘 Cool-down Routine';
+        color = AppTheme.phaseCooldown;
+        break;
+      default:
+        title = '🏋️ Working Sets';
+        color = AppTheme.phaseWorking;
+    }
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(top: 10, bottom: 8),
       child: Text(
         title,
         style: TextStyle(
@@ -286,16 +322,11 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
     );
   }
 
-  Widget _buildExerciseItemCard(PresetExerciseItem item) {
+  Widget _buildInteractiveExerciseCard(int index, PresetExerciseItem item) {
     final masterEx = _findExerciseByName(item.exerciseName);
-    final targetWeightStr = item.targetWeight != null && item.targetWeight! > 0
-        ? ' @ ${item.targetWeight} kg'
-        : '';
-    final targetRpeStr =
-        item.targetRpe != null ? ' • RPE ${item.targetRpe}' : '';
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       color: AppTheme.surfaceElevated,
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -328,45 +359,59 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
                   IconButton(
                     icon: const Icon(Icons.edit_outlined,
                         size: 16, color: AppTheme.textSecondary),
-                    tooltip: 'Edit exercise definition',
+                    tooltip: 'Edit exercise details (name, instructions, equipment)',
                     onPressed: () => _editMasterExercise(masterEx),
                   ),
               ],
             ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withAlpha(25),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '${item.targetSets} sets × ${item.targetReps} reps$targetWeightStr$targetRpeStr',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primary,
-                    ),
-                  ),
+            if (masterEx != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                '${masterEx.primaryMuscle} • ${masterEx.equipment}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textMuted,
                 ),
-                if (masterEx != null) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    '${masterEx.primaryMuscle} • ${masterEx.equipment}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textMuted,
-                    ),
-                  ),
-                ],
+              ),
+            ],
+            const SizedBox(height: 10),
+
+            // INTERACTIVE SETS & REPS CONTROLS
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                // Sets Stepper
+                _buildStepper(
+                  label: 'sets',
+                  value: item.targetSets,
+                  min: 1,
+                  max: 20,
+                  onChanged: (newVal) => _updateItemSets(index, newVal),
+                ),
+
+                // Reps Stepper
+                _buildStepper(
+                  label: 'reps',
+                  value: item.targetReps,
+                  min: 1,
+                  max: 100,
+                  onChanged: (newVal) => _updateItemReps(index, newVal),
+                ),
+
+                // Weight Tag / Stepper
+                _buildWeightButton(
+                  weight: item.targetWeight,
+                  onChanged: (newWeight) =>
+                      _updateItemWeight(index, newWeight),
+                ),
               ],
             ),
+
             if (masterEx?.instructions != null &&
                 masterEx!.instructions!.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 masterEx.instructions!,
                 style: const TextStyle(
@@ -380,6 +425,203 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStepper({
+    required String label,
+    required int value,
+    required int min,
+    required int max,
+    required void Function(int val) onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.remove_rounded, size: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            constraints: const BoxConstraints(),
+            color: value > min ? AppTheme.primary : AppTheme.textMuted,
+            onPressed: value > min ? () => onChanged(value - 1) : null,
+          ),
+          InkWell(
+            onTap: () => _promptNumberInput(
+              title: 'Edit Target $label',
+              currentValue: value,
+              onSave: onChanged,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Text(
+                '$value $label',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_rounded, size: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            constraints: const BoxConstraints(),
+            color: value < max ? AppTheme.primary : AppTheme.textMuted,
+            onPressed: value < max ? () => onChanged(value + 1) : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeightButton({
+    required double? weight,
+    required void Function(double? val) onChanged,
+  }) {
+    final hasWeight = weight != null && weight > 0;
+    final displayStr = hasWeight
+        ? '${weight == weight.roundToDouble() ? weight.toInt() : weight} kg'
+        : 'Bodyweight';
+
+    return InkWell(
+      onTap: () => _promptWeightInput(
+        currentWeight: weight,
+        onSave: onChanged,
+      ),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: hasWeight
+              ? AppTheme.accent.withAlpha(20)
+              : AppTheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: hasWeight
+                ? AppTheme.accent.withAlpha(80)
+                : AppTheme.cardBorder,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              hasWeight ? Icons.fitness_center_rounded : Icons.person_rounded,
+              size: 13,
+              color: hasWeight ? AppTheme.accent : AppTheme.textSecondary,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              displayStr,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: hasWeight ? AppTheme.accent : AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.edit_rounded,
+                size: 12, color: AppTheme.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _promptNumberInput({
+    required String title,
+    required int currentValue,
+    required void Function(int val) onSave,
+  }) {
+    final controller = TextEditingController(text: '$currentValue');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Value'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+            onPressed: () {
+              final n = int.tryParse(controller.text.trim());
+              if (n != null && n > 0) {
+                onSave(n);
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _promptWeightInput({
+    required double? currentWeight,
+    required void Function(double? val) onSave,
+  }) {
+    final controller = TextEditingController(
+        text: currentWeight != null && currentWeight > 0
+            ? '$currentWeight'
+            : '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        title: const Text('Edit Target Weight'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Target Weight (kg)',
+                hintText: 'Leave empty for Bodyweight',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+            onPressed: () {
+              final text = controller.text.trim();
+              if (text.isEmpty) {
+                onSave(null);
+              } else {
+                final d = double.tryParse(text);
+                onSave(d);
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
