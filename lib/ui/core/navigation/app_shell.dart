@@ -83,20 +83,17 @@ class _AppShellState extends State<AppShell> {
                   destinations: const [
                     NavigationRailDestination(
                       icon: Icon(Icons.play_circle_outline_rounded),
-                      selectedIcon: Icon(Icons.play_circle_fill_rounded,
-                          color: AppTheme.primary),
+                      selectedIcon: Icon(Icons.play_circle_fill_rounded),
                       label: Text('Workout'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.menu_book_outlined),
-                      selectedIcon:
-                          Icon(Icons.menu_book_rounded, color: AppTheme.primary),
+                      selectedIcon: Icon(Icons.menu_book_rounded),
                       label: Text('Library'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.history_outlined),
-                      selectedIcon:
-                          Icon(Icons.history_rounded, color: AppTheme.primary),
+                      selectedIcon: Icon(Icons.history_rounded),
                       label: Text('History'),
                     ),
                   ],
@@ -124,20 +121,17 @@ class _AppShellState extends State<AppShell> {
             destinations: const [
               NavigationDestination(
                 icon: Icon(Icons.play_circle_outline_rounded),
-                selectedIcon: Icon(Icons.play_circle_fill_rounded,
-                    color: AppTheme.primary),
+                selectedIcon: Icon(Icons.play_circle_fill_rounded),
                 label: 'Workout',
               ),
               NavigationDestination(
                 icon: Icon(Icons.menu_book_outlined),
-                selectedIcon:
-                    Icon(Icons.menu_book_rounded, color: AppTheme.primary),
+                selectedIcon: Icon(Icons.menu_book_rounded),
                 label: 'Library',
               ),
               NavigationDestination(
                 icon: Icon(Icons.history_outlined),
-                selectedIcon:
-                    Icon(Icons.history_rounded, color: AppTheme.primary),
+                selectedIcon: Icon(Icons.history_rounded),
                 label: 'History',
               ),
             ],

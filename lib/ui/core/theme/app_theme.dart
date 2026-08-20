@@ -30,6 +30,44 @@ class AppTheme {
         surface: surface,
         onSurface: textPrimary,
       ),
+      navigationRailTheme: const NavigationRailThemeData(
+        backgroundColor: surface,
+        indicatorColor: primary,
+        selectedIconTheme: IconThemeData(color: Color(0xFF0F172A), size: 24),
+        unselectedIconTheme: IconThemeData(color: textSecondary, size: 24),
+        selectedLabelTextStyle: TextStyle(
+          color: primaryLight,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+        unselectedLabelTextStyle: TextStyle(
+          color: textSecondary,
+          fontSize: 12,
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface,
+        indicatorColor: primary,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: Color(0xFF0F172A), size: 24);
+          }
+          return const IconThemeData(color: textSecondary, size: 24);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              color: primaryLight,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            );
+          }
+          return const TextStyle(
+            color: textSecondary,
+            fontSize: 12,
+          );
+        }),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         elevation: 0,
