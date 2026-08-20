@@ -185,12 +185,9 @@ class AiWorkoutGeneratorViewModel extends ChangeNotifier {
     // 1. Sync any newly introduced exercise definitions to the SQLite catalog
     for (final item in _generatedResult!.exercises) {
       if (item.newExerciseDefinition != null) {
-        final existing = await exerciseRepository.getExerciseByName(item.presetItem.exerciseName);
-        if (existing == null) {
-          await exerciseRepository.insertExercise(
-            item.newExerciseDefinition!.toCompanion(),
-          );
-        }
+        await exerciseRepository.upsertExerciseByName(
+          item.newExerciseDefinition!.toCompanion(),
+        );
       }
     }
 

@@ -177,6 +177,18 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                   ),
                 );
               }
+            } else if (value == 'deduplicate') {
+              final removed = await vm.deduplicateLibrary();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(removed > 0
+                        ? 'Removed $removed duplicate exercise${removed == 1 ? '' : 's'} from library.'
+                        : 'Library is clean! No duplicate exercises found.'),
+                    backgroundColor: AppTheme.accent,
+                  ),
+                );
+              }
             } else if (value == 'apiKey') {
               ApiKeyDialog.show(context, viewModel: vm);
             }
@@ -189,6 +201,16 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                   Icon(Icons.key_rounded, size: 18, color: AppTheme.primary),
                   SizedBox(width: 10),
                   Text('Gemini API Key Settings'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'deduplicate',
+              child: Row(
+                children: [
+                  Icon(Icons.auto_fix_high_rounded, size: 18, color: AppTheme.accent),
+                  SizedBox(width: 10),
+                  Text('Clean & Deduplicate Library'),
                 ],
               ),
             ),
@@ -208,7 +230,7 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                 children: [
                   Icon(Icons.restart_alt_rounded, size: 18, color: AppTheme.textSecondary),
                   SizedBox(width: 10),
-                  Text('Re-seed Library with Home & Free Weights'),
+                  Text('Re-seed Library with Defaults'),
                 ],
               ),
             ),

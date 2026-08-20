@@ -148,12 +148,35 @@ class ExerciseAdminViewModel extends ChangeNotifier {
     try {
       _savedApiKey = await _settingsService.getGeminiApiKey();
       await _syncService.seedInitialExercisesIfEmpty();
+      await _exerciseRepo.deduplicateExercises();
       await loadExercises();
     } catch (e) {
       _errorMessage = 'Failed to initialize exercises: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<int> deduplicateLibrary() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final removed = await _exerciseRepo.deduplicateExercises();
+      await loadExercises();
+      if (removed > 0) {
+        _statusMessage = 'Deduplication complete: Removed $removed duplicate exercise${removed == 1 ? '' : 's'}.';
+      } else {
+        _statusMessage = 'Library is clean. No duplicates found.';
+      }
+      _isLoading = false;
+      notifyListeners();
+      return removed;
+    } catch (e) {
+      _errorMessage = 'Deduplication failed: $e';
+      _isLoading = false;
+      notifyListeners();
+      return 0;
     }
   }
 
@@ -179,6 +202,7 @@ class ExerciseAdminViewModel extends ChangeNotifier {
       final seeds = ExerciseSyncService.getCuratedMasterLibrary();
       final companions = seeds.map((dto) => dto.toCompanion()).toList();
       await _exerciseRepo.bulkUpsertExercises(companions);
+      await _exerciseRepo.deduplicateExercises();
       await loadExercises();
       _statusMessage = 'Successfully seeded master catalog with ${companions.length} exercises.';
     } catch (e) {
@@ -237,7 +261,7 @@ class ExerciseAdminViewModel extends ChangeNotifier {
   Future<bool> saveExercise(ExerciseDto dto) async {
     try {
       final companion = dto.toCompanion();
-      await _exerciseRepo.insertExercise(companion);
+      await _exerciseRepo.upsertExerciseByName(companion);
       await loadExercises();
       _statusMessage = 'Exercise "${dto.name}" saved successfully.';
       notifyListeners();

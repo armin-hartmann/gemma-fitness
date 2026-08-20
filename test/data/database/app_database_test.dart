@@ -148,6 +148,96 @@ void main() {
       expect(result.category, 'Hypertrophy');
       expect(result.instructions, 'Deep squat below parallel.');
     });
+
+    test('upsertExerciseByName prevents duplicate names and updates existing records', () async {
+      final ex1 = ExercisesCompanion.insert(
+        id: uuid.v4(),
+        name: 'Dumbbell Hammer Curl',
+        category: 'Strength',
+        primaryMuscle: 'Biceps',
+        equipment: 'Dumbbell',
+        instructions: const Value('Neutral grip curl.'),
+      );
+
+      final id1 = await exerciseRepo.upsertExerciseByName(ex1);
+
+      // Try inserting with case difference
+      final ex2 = ExercisesCompanion.insert(
+        id: uuid.v4(),
+        name: 'dumbbell hammer curl',
+        category: 'Hypertrophy',
+        primaryMuscle: 'Biceps',
+        equipment: 'Dumbbell',
+        instructions: const Value('Keep elbows pinned at sides.'),
+      );
+
+      final id2 = await exerciseRepo.upsertExerciseByName(ex2);
+
+      // Must have matched and reused original ID
+      expect(id2, id1);
+
+      final all = await exerciseRepo.getAllExercises();
+      expect(all.length, 1);
+      expect(all.first.instructions, 'Keep elbows pinned at sides.');
+      expect(all.first.category, 'Hypertrophy');
+    });
+
+    test('deduplicateExercises identifies duplicates, updates references, and removes redundant rows', () async {
+      final idA = uuid.v4();
+      final idB = uuid.v4();
+      final idC = uuid.v4();
+
+      await exerciseRepo.insertExercise(ExercisesCompanion.insert(
+        id: idA,
+        name: 'Barbell Bench Press',
+        category: 'Strength',
+        primaryMuscle: 'Chest',
+        equipment: 'Barbell',
+        instructions: const Value('Detailed form cues for bench press.'),
+      ));
+
+      await exerciseRepo.insertExercise(ExercisesCompanion.insert(
+        id: idB,
+        name: 'barbell bench press',
+        category: 'Strength',
+        primaryMuscle: 'Chest',
+        equipment: 'Barbell',
+        instructions: const Value(''),
+      ));
+
+      await exerciseRepo.insertExercise(ExercisesCompanion.insert(
+        id: idC,
+        name: 'BARBELL BENCH PRESS',
+        category: 'Strength',
+        primaryMuscle: 'Chest',
+        equipment: 'Barbell',
+      ));
+
+      // Link duplicate idB to a session exercise
+      final sessionId = uuid.v4();
+      await workoutRepo.createSession(WorkoutSessionsCompanion.insert(
+        id: sessionId,
+        dateStarted: DateTime.now(),
+      ));
+
+      final seId = uuid.v4();
+      await workoutRepo.addExerciseToSession(SessionExercisesCompanion.insert(
+        id: seId,
+        sessionId: sessionId,
+        exerciseId: idB,
+      ));
+
+      final removedCount = await exerciseRepo.deduplicateExercises();
+      expect(removedCount, 2);
+
+      final remaining = await exerciseRepo.getAllExercises();
+      expect(remaining.length, 1);
+      expect(remaining.first.id, idA);
+
+      // Check session exercise reference was updated to idA
+      final sessionExercises = await workoutRepo.getSessionExercises(sessionId);
+      expect(sessionExercises.first.exerciseId, idA);
+    });
   });
 
   group('Workout Sessions, Session Exercises, and Workout Sets', () {
