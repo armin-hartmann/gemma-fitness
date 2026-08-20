@@ -11,6 +11,7 @@ import '../view_models/workout_templates_view_model.dart';
 import 'ai_workout_generator_dialog.dart';
 import 'exercise_picker_dialog.dart';
 import 'workout_detail_dialog.dart';
+import 'workout_preset_card.dart';
 import 'workout_routine_editor_dialog.dart';
 import 'workout_summary_dialog.dart';
 
@@ -198,23 +199,24 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth > 700;
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isWide ? 3 : 1,
-                        mainAxisSpacing: 14,
-                        crossAxisSpacing: 14,
-                        mainAxisExtent: 250,
-                      ),
-                      itemCount: templates.length,
-                      itemBuilder: (context, index) {
-                        final preset = templates[index];
-                        return _buildPresetCard(vm, preset);
-                      },
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 310,
+                    mainAxisExtent: 295,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                  ),
+                  itemCount: templates.length,
+                  itemBuilder: (context, index) {
+                    final preset = templates[index];
+                    return WorkoutPresetCard(
+                      preset: preset,
+                      onInspect: () => _openWorkoutDetail(preset),
+                      onStart: () => vm.startWorkoutFromPreset(preset),
+                      onDelete: () =>
+                          widget.templatesViewModel.deleteTemplate(preset.id),
                     );
                   },
                 ),
@@ -223,118 +225,6 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildPresetCard(ActiveWorkoutViewModel vm, WorkoutPreset preset) {
-    final isHome = preset.modality == 'bodyweight';
-
-    return Card(
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => _openWorkoutDetail(preset),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      preset.title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: isHome
-                          ? AppTheme.accent.withAlpha(30)
-                          : AppTheme.primary.withAlpha(30),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      isHome ? 'No Equipment' : 'Free Weights',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: isHome ? AppTheme.accent : AppTheme.primary,
-                      ),
-                    ),
-                  ),
-                  if (preset.isCustom)
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded,
-                          size: 16, color: Colors.redAccent),
-                      tooltip: 'Delete custom routine',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () =>
-                          widget.templatesViewModel.deleteTemplate(preset.id),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                preset.description,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
-                  height: 1.3,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-              Text(
-                '${preset.exercisePhases.length} exercises (Tap to inspect & edit)',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      onPressed: () => _openWorkoutDetail(preset),
-                      child: const Text('Inspect / Edit'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.accent,
-                        foregroundColor: const Color(0xFF0F172A),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      onPressed: () => vm.startWorkoutFromPreset(preset),
-                      icon: const Icon(Icons.play_arrow_rounded, size: 16),
-                      label: const Text('Start'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
