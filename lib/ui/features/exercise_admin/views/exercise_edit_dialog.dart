@@ -173,15 +173,19 @@ class _ExerciseEditDialogState extends State<ExerciseEditDialog> {
                           items: const [
                             DropdownMenuItem(
                               value: 'warmup',
-                              child: Text('Warm-up'),
+                              child: Text('🔥 Warm-up'),
                             ),
                             DropdownMenuItem(
                               value: 'working',
-                              child: Text('Working'),
+                              child: Text('🏋️ Working Sets'),
                             ),
                             DropdownMenuItem(
                               value: 'cooldown',
-                              child: Text('Cool-down'),
+                              child: Text('🧘 Cool-down'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'versatile',
+                              child: Text('⚡ Versatile (Multi-Phase)'),
                             ),
                           ],
                           onChanged: (val) {

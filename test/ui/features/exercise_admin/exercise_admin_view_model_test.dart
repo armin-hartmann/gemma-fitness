@@ -68,8 +68,9 @@ void main() {
       viewModel.setPhase('warmup');
       expect(viewModel.filteredExercises.length, viewModel.warmupCount);
       expect(
-        viewModel.filteredExercises
-            .every((e) => e.defaultPhase.toLowerCase() == 'warmup'),
+        viewModel.filteredExercises.every((e) =>
+            e.defaultPhase.toLowerCase() == 'warmup' ||
+            e.defaultPhase.toLowerCase() == 'versatile'),
         isTrue,
       );
 

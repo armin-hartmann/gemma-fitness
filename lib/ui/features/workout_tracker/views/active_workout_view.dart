@@ -609,7 +609,11 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
                   ),
                 ),
                 PhaseBadge(
-                    phase: activeEx.sessionExercise.phase, compact: true),
+                  phase: activeEx.sessionExercise.phase,
+                  compact: true,
+                  onPhaseChanged: (newPhase) => vm.updateExercisePhase(
+                      activeEx.sessionExercise.id, newPhase),
+                ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded,
                       size: 18, color: AppTheme.textMuted),

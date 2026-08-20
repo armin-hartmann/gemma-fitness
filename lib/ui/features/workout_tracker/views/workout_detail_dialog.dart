@@ -339,7 +339,12 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
                 Expanded(
                   child: Row(
                     children: [
-                      PhaseBadge(phase: item.phase, compact: true),
+                      PhaseBadge(
+                        phase: item.phase,
+                        compact: true,
+                        onPhaseChanged: (newPhase) =>
+                            _updateExercisePhase(index, newPhase),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -638,6 +643,20 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
       );
       await _loadExercises();
     }
+  }
+
+  Future<void> _updateExercisePhase(int index, String newPhase) async {
+    final updatedList = List<PresetExerciseItem>.from(_preset.exercisePhases);
+    updatedList[index] = updatedList[index].copyWith(phase: newPhase);
+
+    // Re-sort list by phase order (warmup -> working -> cooldown)
+    const order = {'warmup': 0, 'working': 1, 'cooldown': 2};
+    updatedList.sort(
+        (a, b) => (order[a.phase] ?? 1).compareTo(order[b.phase] ?? 1));
+
+    final updatedPreset = _preset.copyWith(exercisePhases: updatedList);
+    setState(() => _preset = updatedPreset);
+    await widget.templatesViewModel.saveTemplate(updatedPreset);
   }
 
   Future<void> _openRoutineEditor() async {

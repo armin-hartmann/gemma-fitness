@@ -281,6 +281,15 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
             isSelected: vm.selectedPhase == 'cooldown',
             onTap: () => vm.setPhase('cooldown'),
           ),
+          const SizedBox(width: 10),
+          StatChip(
+            label: '⚡ Versatile',
+            count: vm.versatileCount,
+            icon: Icons.swap_horiz_rounded,
+            color: AppTheme.primaryLight,
+            isSelected: vm.selectedPhase == 'versatile',
+            onTap: () => vm.setPhase('versatile'),
+          ),
         ],
       ),
     );

@@ -656,7 +656,12 @@ class _AiWorkoutGeneratorDialogState extends State<AiWorkoutGeneratorDialog> {
           children: [
             Row(
               children: [
-                PhaseBadge(phase: p.phase, compact: true),
+                PhaseBadge(
+                  phase: p.phase,
+                  compact: true,
+                  onPhaseChanged: (newPhase) =>
+                      _viewModel.updateExercisePhase(index, newPhase),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

@@ -250,7 +250,15 @@ class _WorkoutRoutineEditorDialogState extends State<WorkoutRoutineEditorDialog>
           children: [
             Row(
               children: [
-                PhaseBadge(phase: item.phase, compact: true),
+                PhaseBadge(
+                  phase: item.phase,
+                  compact: true,
+                  onPhaseChanged: (val) {
+                    setState(() {
+                      _exercises[index] = item.copyWith(phase: val);
+                    });
+                  },
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -261,24 +269,6 @@ class _WorkoutRoutineEditorDialogState extends State<WorkoutRoutineEditorDialog>
                       color: AppTheme.textPrimary,
                     ),
                   ),
-                ),
-                // Phase selector dropdown
-                DropdownButton<String>(
-                  value: item.phase,
-                  underline: const SizedBox.shrink(),
-                  dropdownColor: AppTheme.surface,
-                  items: const [
-                    DropdownMenuItem(value: 'warmup', child: Text('Warm-up')),
-                    DropdownMenuItem(value: 'working', child: Text('Working')),
-                    DropdownMenuItem(value: 'cooldown', child: Text('Cool-down')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _exercises[index] = item.copyWith(phase: val);
-                      });
-                    }
-                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline_rounded,

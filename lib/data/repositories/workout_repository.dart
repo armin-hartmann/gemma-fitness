@@ -128,6 +128,11 @@ class WorkoutRepository {
         .get();
   }
 
+  Future<void> updateSessionExercisePhase(String id, String phase) {
+    return (_db.update(_db.sessionExercises)..where((tbl) => tbl.id.equals(id)))
+        .write(SessionExercisesCompanion(phase: Value(phase)));
+  }
+
   Future<int> deleteSessionExercise(String id) {
     return (_db.delete(_db.sessionExercises)..where((tbl) => tbl.id.equals(id))).go();
   }

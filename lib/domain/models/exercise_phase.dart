@@ -1,7 +1,8 @@
 enum ExercisePhase {
   warmup,
   working,
-  cooldown;
+  cooldown,
+  versatile;
 
   String get displayName {
     switch (this) {
@@ -11,6 +12,8 @@ enum ExercisePhase {
         return 'Working';
       case ExercisePhase.cooldown:
         return 'Cool-down';
+      case ExercisePhase.versatile:
+        return 'Versatile';
     }
   }
 

@@ -243,6 +243,13 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     await _refreshCurrentSession();
   }
 
+  /// Updates the phase (warmup, working, cooldown) of an exercise in the active session.
+  Future<void> updateExercisePhase(String sessionExerciseId, String newPhase) async {
+    if (_currentSession == null) return;
+    await _workoutRepo.updateSessionExercisePhase(sessionExerciseId, newPhase);
+    await _refreshCurrentSession();
+  }
+
   /// Adds another set to an exercise in the active session, copying previous set's weight/reps.
   Future<void> addSetToExercise(ActiveSessionExercise activeExercise) async {
     if (_currentSession == null) return;

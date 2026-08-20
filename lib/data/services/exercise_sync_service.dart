@@ -81,7 +81,7 @@ class ExerciseSyncService {
         requiresEquipment: true,
         instructions:
             'Hold a resistance band at shoulder height with straight arms. Pull band across chest by squeezing shoulder blades together.',
-        defaultPhase: 'warmup',
+        defaultPhase: 'versatile',
       ),
       ExerciseDto(
         id: 'seed-warmup-04',
@@ -92,7 +92,7 @@ class ExerciseSyncService {
         requiresEquipment: false,
         instructions:
             'Stand shoulder-width apart. Lower hips down and back with chest proud. Drive through whole foot to stand tall.',
-        defaultPhase: 'warmup',
+        defaultPhase: 'versatile',
       ),
       ExerciseDto(
         id: 'seed-warmup-05',
@@ -127,7 +127,7 @@ class ExerciseSyncService {
         requiresEquipment: false,
         instructions:
             'Hands slightly wider than shoulder width. Maintain rigid plank posture from head to heels. Lower chest to floor and press up.',
-        defaultPhase: 'working',
+        defaultPhase: 'versatile',
       ),
       ExerciseDto(
         id: 'seed-bw-02',
@@ -149,7 +149,7 @@ class ExerciseSyncService {
         requiresEquipment: false,
         instructions:
             'Step forward into a deep lunge until back knee gently hovers above ground. Drive through front heel to step directly into next lunge.',
-        defaultPhase: 'working',
+        defaultPhase: 'versatile',
       ),
       ExerciseDto(
         id: 'seed-bw-04',
@@ -160,7 +160,7 @@ class ExerciseSyncService {
         requiresEquipment: false,
         instructions:
             'Lie on back with knees bent and feet flat. Drive hips to ceiling, squeezing glutes hard at top for 2 seconds without hyperextending lower back.',
-        defaultPhase: 'working',
+        defaultPhase: 'versatile',
       ),
       ExerciseDto(
         id: 'seed-bw-05',

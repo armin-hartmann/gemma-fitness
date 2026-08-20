@@ -73,9 +73,18 @@ class ExerciseAdminViewModel extends ChangeNotifier {
         return false;
       }
 
-      if (_selectedPhase != null &&
-          ex.defaultPhase.toLowerCase() != _selectedPhase!.toLowerCase()) {
-        return false;
+      if (_selectedPhase != null) {
+        final phase = ex.defaultPhase.toLowerCase();
+        final filter = _selectedPhase!.toLowerCase();
+        if (filter == 'warmup') {
+          if (phase != 'warmup' && phase != 'versatile') return false;
+        } else if (filter == 'working') {
+          if (phase != 'working' && phase != 'versatile') return false;
+        } else if (filter == 'cooldown') {
+          if (phase != 'cooldown') return false;
+        } else if (filter == 'versatile') {
+          if (phase != 'versatile') return false;
+        }
       }
 
       if (_selectedEquipmentFilter != null) {
@@ -108,12 +117,22 @@ class ExerciseAdminViewModel extends ChangeNotifier {
   }
 
   int get totalCount => _allExercises.length;
-  int get warmupCount =>
-      _allExercises.where((e) => e.defaultPhase.toLowerCase() == 'warmup').length;
-  int get workingCount =>
-      _allExercises.where((e) => e.defaultPhase.toLowerCase() == 'working').length;
-  int get cooldownCount =>
-      _allExercises.where((e) => e.defaultPhase.toLowerCase() == 'cooldown').length;
+  int get warmupCount => _allExercises
+      .where((e) =>
+          e.defaultPhase.toLowerCase() == 'warmup' ||
+          e.defaultPhase.toLowerCase() == 'versatile')
+      .length;
+  int get workingCount => _allExercises
+      .where((e) =>
+          e.defaultPhase.toLowerCase() == 'working' ||
+          e.defaultPhase.toLowerCase() == 'versatile')
+      .length;
+  int get cooldownCount => _allExercises
+      .where((e) => e.defaultPhase.toLowerCase() == 'cooldown')
+      .length;
+  int get versatileCount => _allExercises
+      .where((e) => e.defaultPhase.toLowerCase() == 'versatile')
+      .length;
 
   int get noEquipmentCount => _allExercises
       .where((e) => !e.requiresEquipment || e.equipment.toLowerCase() == 'bodyweight')

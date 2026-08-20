@@ -176,6 +176,31 @@ class AiWorkoutGeneratorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateExercisePhase(int index, String newPhase) {
+    if (_generatedResult == null) return;
+    final exercises = List<GeneratedExerciseItem>.from(_generatedResult!.exercises);
+    final item = exercises[index];
+    exercises[index] = GeneratedExerciseItem(
+      presetItem: item.presetItem.copyWith(phase: newPhase),
+      newExerciseDefinition: item.newExerciseDefinition,
+      coachingCue: item.coachingCue,
+    );
+
+    // Re-sort by phase order: warmup -> working -> cooldown
+    const order = {'warmup': 0, 'working': 1, 'cooldown': 2};
+    exercises.sort((a, b) =>
+        (order[a.presetItem.phase] ?? 1).compareTo(order[b.presetItem.phase] ?? 1));
+
+    _generatedResult = GeneratedWorkoutResult(
+      title: _generatedResult!.title,
+      description: _generatedResult!.description,
+      modality: _generatedResult!.modality,
+      reasoning: _generatedResult!.reasoning,
+      exercises: exercises,
+    );
+    notifyListeners();
+  }
+
   /// Saves the generated preset to the user's saved routines and syncs any missing exercise definitions to the catalog.
   Future<WorkoutPreset?> saveGeneratedPreset() async {
     if (_generatedResult == null) return null;
