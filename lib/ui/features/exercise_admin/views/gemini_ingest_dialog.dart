@@ -182,37 +182,85 @@ Cool-down:
           ),
           const SizedBox(height: 12),
 
-          // API Key Toggle
-          InkWell(
-            onTap: () => setState(() => _showApiKeyInput = !_showApiKeyInput),
-            child: Row(
-              children: [
-                Icon(
-                  _showApiKeyInput
-                      ? Icons.arrow_drop_down_rounded
-                      : Icons.arrow_right_rounded,
-                  color: AppTheme.textSecondary,
+          // API Key Status & Input
+          if (vm.hasApiKey && !_showApiKeyInput) ...[
+            InkWell(
+              onTap: () => setState(() => _showApiKeyInput = true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.accent.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.accent.withAlpha(60)),
                 ),
-                const Text(
-                  'Custom Gemini API Key (Optional if GEMINI_API_KEY environment variable is set)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: AppTheme.accent, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'Gemini API Key configured and ready on this device',
+                      style: TextStyle(
+                        color: AppTheme.accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(Icons.edit_rounded, color: AppTheme.textSecondary, size: 14),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          if (_showApiKeyInput) ...[
-            const SizedBox(height: 8),
-            TextField(
-              controller: _apiKeyController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Gemini API Key',
-                hintText: 'AIzaSy...',
               ),
             ),
+          ] else ...[
+            InkWell(
+              onTap: () => setState(() => _showApiKeyInput = !_showApiKeyInput),
+              child: Row(
+                children: [
+                  Icon(
+                    _showApiKeyInput
+                        ? Icons.arrow_drop_down_rounded
+                        : Icons.arrow_right_rounded,
+                    color: AppTheme.textSecondary,
+                  ),
+                  const Text(
+                    'Gemini API Key (Enter once to save on this device)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_showApiKeyInput || !vm.hasApiKey) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _apiKeyController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Gemini API Key',
+                        hintText: 'AIzaSy...',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final key = _apiKeyController.text.trim();
+                      if (key.isNotEmpty) {
+                        await vm.saveApiKey(key);
+                        setState(() => _showApiKeyInput = false);
+                      }
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ],
           ],
 
           if (vm.errorMessage != null) ...[

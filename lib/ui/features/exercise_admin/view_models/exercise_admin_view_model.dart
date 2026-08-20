@@ -3,6 +3,7 @@ import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/exercise_repository.dart';
 import '../../../../data/services/exercise_sync_service.dart';
 import '../../../../data/services/gemini_exercise_service.dart';
+import '../../../../data/services/settings_service.dart';
 import '../../../../domain/models/exercise_dto.dart';
 
 class ExerciseAdminViewModel extends ChangeNotifier {
@@ -10,23 +11,27 @@ class ExerciseAdminViewModel extends ChangeNotifier {
     required ExerciseRepository exerciseRepository,
     required this._syncService,
     required this._geminiService,
-  }) : _exerciseRepo = exerciseRepository;
+    SettingsService? settingsService,
+  })  : _exerciseRepo = exerciseRepository,
+        _settingsService = settingsService ?? SettingsService();
 
   final ExerciseRepository _exerciseRepo;
   final ExerciseSyncService _syncService;
   final GeminiExerciseService _geminiService;
+  final SettingsService _settingsService;
 
   List<Exercise> _allExercises = [];
   bool _isLoading = false;
   bool _isIngesting = false;
   String? _errorMessage;
   String? _statusMessage;
+  String? _savedApiKey;
 
   String _searchQuery = '';
   String? _selectedCategory;
   String? _selectedMuscle;
   String? _selectedPhase;
-  String? _selectedEquipmentFilter; // 'no_equipment', 'free_weights', 'machines', null
+  String? _selectedEquipmentFilter;
 
   // Bulk Ingestion state
   List<ExerciseDto> _parsedIngestionResults = [];
@@ -42,10 +47,13 @@ class ExerciseAdminViewModel extends ChangeNotifier {
   String? get selectedPhase => _selectedPhase;
   String? get selectedEquipmentFilter => _selectedEquipmentFilter;
   List<ExerciseDto> get parsedIngestionResults => _parsedIngestionResults;
+  String? get savedApiKey => _savedApiKey;
+  bool get hasApiKey =>
+      (_savedApiKey != null && _savedApiKey!.isNotEmpty) ||
+      _settingsService.hasEnvironmentKey;
 
   List<Exercise> get filteredExercises {
     return _allExercises.where((ex) {
-      // Search query filter
       if (_searchQuery.trim().isNotEmpty) {
         final q = _searchQuery.toLowerCase();
         final matchesName = ex.name.toLowerCase().contains(q);
@@ -57,23 +65,19 @@ class ExerciseAdminViewModel extends ChangeNotifier {
         }
       }
 
-      // Category filter
       if (_selectedCategory != null && ex.category != _selectedCategory) {
         return false;
       }
 
-      // Muscle filter
       if (_selectedMuscle != null && ex.primaryMuscle != _selectedMuscle) {
         return false;
       }
 
-      // Phase filter
       if (_selectedPhase != null &&
           ex.defaultPhase.toLowerCase() != _selectedPhase!.toLowerCase()) {
         return false;
       }
 
-      // Equipment modality filter
       if (_selectedEquipmentFilter != null) {
         switch (_selectedEquipmentFilter) {
           case 'no_equipment':
@@ -142,6 +146,7 @@ class ExerciseAdminViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _savedApiKey = await _settingsService.getGeminiApiKey();
       await _syncService.seedInitialExercisesIfEmpty();
       await loadExercises();
     } catch (e) {
@@ -152,12 +157,25 @@ class ExerciseAdminViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> saveApiKey(String key) async {
+    await _settingsService.saveGeminiApiKey(key);
+    _savedApiKey = key.trim();
+    _statusMessage = 'Gemini API key saved to device!';
+    notifyListeners();
+  }
+
+  Future<void> clearApiKey() async {
+    await _settingsService.clearGeminiApiKey();
+    _savedApiKey = null;
+    _statusMessage = 'Gemini API key removed from device.';
+    notifyListeners();
+  }
+
   Future<void> reseedDatabase() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Clear and re-populate with latest seed catalog
       final seeds = ExerciseSyncService.getCuratedMasterLibrary();
       final companions = seeds.map((dto) => dto.toCompanion()).toList();
       await _exerciseRepo.bulkUpsertExercises(companions);

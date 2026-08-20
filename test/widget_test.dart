@@ -8,9 +8,12 @@ import 'package:gemma_fitness/data/services/gemini_exercise_service.dart';
 import 'package:gemma_fitness/main.dart';
 import 'package:gemma_fitness/ui/features/exercise_admin/view_models/exercise_admin_view_model.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 void main() {
   testWidgets('GemmaFitnessApp smoke test and master exercise screen rendering',
       (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final exerciseRepo = ExerciseRepository(db);
     final workoutRepo = WorkoutRepository(db);

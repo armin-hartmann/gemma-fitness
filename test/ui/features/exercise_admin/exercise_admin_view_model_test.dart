@@ -7,7 +7,11 @@ import 'package:gemma_fitness/data/services/gemini_exercise_service.dart';
 import 'package:gemma_fitness/domain/models/exercise_dto.dart';
 import 'package:gemma_fitness/ui/features/exercise_admin/view_models/exercise_admin_view_model.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late AppDatabase db;
   late ExerciseRepository repo;
   late ExerciseSyncService syncService;
@@ -15,6 +19,7 @@ void main() {
   late ExerciseAdminViewModel viewModel;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     db = AppDatabase.forTesting(NativeDatabase.memory());
     repo = ExerciseRepository(db);
     syncService = ExerciseSyncService(exerciseRepository: repo);

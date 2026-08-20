@@ -1,31 +1,43 @@
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../domain/models/exercise_dto.dart';
+import 'settings_service.dart';
 
 class GeminiExerciseService {
   GeminiExerciseService({
-    String? apiKey,
+    SettingsService? settingsService,
+    this._apiKey,
     this._modelName = 'gemini-2.5-flash',
-  }) : _apiKey = apiKey ?? const String.fromEnvironment('GEMINI_API_KEY');
+  }) : _settingsService = settingsService ?? SettingsService();
 
-  final String _apiKey;
+  final SettingsService _settingsService;
+  final String? _apiKey;
   final String _modelName;
 
-  bool get isConfigured => _apiKey.trim().isNotEmpty;
+  /// Returns true if either an explicit key, environment key, or local persisted key is found.
+  Future<bool> get isConfigured async {
+    if (_apiKey != null && _apiKey.trim().isNotEmpty) return true;
+    final storedKey = await _settingsService.getGeminiApiKey();
+    return storedKey != null && storedKey.isNotEmpty;
+  }
 
-  /// Parses raw, unstructured text (e.g. workout notes, program PDFs, exercise lists)
-  /// into a structured list of [ExerciseDto] objects using Gemini.
+  /// Parses raw, unstructured text into a structured list of [ExerciseDto] objects.
   Future<List<ExerciseDto>> parseExercisesFromRawText(
     String rawText, {
     String? overrideApiKey,
   }) async {
-    final keyToUse = (overrideApiKey != null && overrideApiKey.trim().isNotEmpty)
-        ? overrideApiKey
-        : _apiKey;
+    String? keyToUse;
+    if (overrideApiKey != null && overrideApiKey.trim().isNotEmpty) {
+      keyToUse = overrideApiKey.trim();
+    } else if (_apiKey != null && _apiKey.trim().isNotEmpty) {
+      keyToUse = _apiKey.trim();
+    } else {
+      keyToUse = await _settingsService.getGeminiApiKey();
+    }
 
-    if (keyToUse.trim().isEmpty) {
+    if (keyToUse == null || keyToUse.trim().isEmpty) {
       throw StateError(
-        'Gemini API key is not configured. Please supply an API key in settings or pass GEMINI_API_KEY.',
+        'Gemini API key is not configured. Please supply an API key in Settings or pass GEMINI_API_KEY.',
       );
     }
 

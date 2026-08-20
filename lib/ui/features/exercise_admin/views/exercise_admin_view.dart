@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/phase_badge.dart';
 import '../../../core/widgets/stat_chip.dart';
 import '../view_models/exercise_admin_view_model.dart';
+import 'api_key_dialog.dart';
 import 'exercise_edit_dialog.dart';
 import 'gemini_ingest_dialog.dart';
 
@@ -176,9 +177,21 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                   ),
                 );
               }
+            } else if (value == 'apiKey') {
+              ApiKeyDialog.show(context, viewModel: vm);
             }
           },
           itemBuilder: (ctx) => [
+            const PopupMenuItem(
+              value: 'apiKey',
+              child: Row(
+                children: [
+                  Icon(Icons.key_rounded, size: 18, color: AppTheme.primary),
+                  SizedBox(width: 10),
+                  Text('Gemini API Key Settings'),
+                ],
+              ),
+            ),
             const PopupMenuItem(
               value: 'export',
               child: Row(
