@@ -575,107 +575,89 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
 
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    exercise.name,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                PhaseBadge(phase: exercise.defaultPhase, compact: true),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                // Equipment Requirement Badge
-                if (isHomeBodyweight)
-                  _buildEquipmentTag(
-                    Icons.home_rounded,
-                    'No Equipment',
-                    AppTheme.accent,
-                  )
-                else if (isFreeWeight)
-                  _buildEquipmentTag(
-                    Icons.fitness_center_rounded,
-                    exercise.equipment,
-                    AppTheme.primary,
-                  )
-                else
-                  _buildEquipmentTag(
-                    Icons.precision_manufacturing_rounded,
-                    exercise.equipment,
-                    AppTheme.phaseCooldown,
-                  ),
-                _buildCardTag(
-                    Icons.accessibility_new_outlined, exercise.primaryMuscle),
-                _buildCardTag(Icons.category_outlined, exercise.category),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: (exercise.instructions != null &&
-                      exercise.instructions!.isNotEmpty)
-                  ? Text(
-                      exercise.instructions!,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () async {
+          final updatedDto = await ExerciseEditDialog.show(
+            context,
+            initialExercise: exercise,
+          );
+          if (updatedDto != null) {
+            await vm.updateExercise(updatedDto);
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      exercise.name,
                       style: const TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 12,
-                        height: 1.3,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  PhaseBadge(phase: exercise.defaultPhase, compact: true),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  // Equipment Requirement Badge
+                  if (isHomeBodyweight)
+                    _buildEquipmentTag(
+                      Icons.home_rounded,
+                      'No Equipment',
+                      AppTheme.accent,
                     )
-                  : const SizedBox.shrink(),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined,
-                      size: 16, color: AppTheme.textSecondary),
-                  tooltip: 'Edit',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () async {
-                    final updatedDto = await ExerciseEditDialog.show(
-                      context,
-                      initialExercise: exercise,
-                    );
-                    if (updatedDto != null) {
-                      await vm.updateExercise(updatedDto);
-                    }
-                  },
-                ),
-                const SizedBox(width: 14),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded,
-                      size: 16, color: Colors.redAccent),
-                  tooltip: 'Delete',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () => vm.deleteExercise(exercise.id),
-                ),
-              ],
-            ),
-          ],
+                  else if (isFreeWeight)
+                    _buildEquipmentTag(
+                      Icons.fitness_center_rounded,
+                      exercise.equipment,
+                      AppTheme.primary,
+                    )
+                  else
+                    _buildEquipmentTag(
+                      Icons.precision_manufacturing_rounded,
+                      exercise.equipment,
+                      AppTheme.phaseCooldown,
+                    ),
+                  _buildCardTag(
+                      Icons.accessibility_new_outlined, exercise.primaryMuscle),
+                  _buildCardTag(Icons.category_outlined, exercise.category),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: (exercise.instructions != null &&
+                        exercise.instructions!.isNotEmpty)
+                    ? Text(
+                        exercise.instructions!,
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                          height: 1.3,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
         ),
       ),
     );

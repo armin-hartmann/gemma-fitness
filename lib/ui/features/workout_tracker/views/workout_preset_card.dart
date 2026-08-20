@@ -235,47 +235,29 @@ class _WorkoutPresetCardState extends State<WorkoutPresetCard> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Bottom Action Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            side: BorderSide(
-                              color: _isHovered
-                                  ? AppTheme.primary.withAlpha(120)
-                                  : AppTheme.cardBorder,
-                            ),
-                          ),
-                          onPressed: widget.onInspect,
-                          child: const Text(
-                            'Inspect / Edit',
-                            style: TextStyle(fontSize: 12),
-                          ),
+                  // Bottom Action Button: Start Workout
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: const Color(0xFF0F172A),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: _isHovered ? 2 : 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accentColor,
-                            foregroundColor: const Color(0xFF0F172A),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            elevation: _isHovered ? 2 : 0,
-                          ),
-                          onPressed: widget.onStart,
-                          icon: const Icon(Icons.play_arrow_rounded, size: 16),
-                          label: const Text(
-                            'Start',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                      onPressed: widget.onStart,
+                      icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                      label: const Text(
+                        'Start Workout',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),

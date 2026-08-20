@@ -337,45 +337,47 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Row(
-                    children: [
-                      PhaseBadge(
-                        phase: item.phase,
-                        compact: true,
-                        onPhaseChanged: (newPhase) =>
-                            _updateExercisePhase(index, newPhase),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          item.exerciseName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: AppTheme.textPrimary,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: masterEx != null
+                        ? () => _editMasterExercise(masterEx)
+                        : null,
+                    child: Row(
+                      children: [
+                        PhaseBadge(
+                          phase: item.phase,
+                          compact: true,
+                          onPhaseChanged: (newPhase) =>
+                              _updateExercisePhase(index, newPhase),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item.exerciseName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppTheme.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                // Edit Master Exercise Button
-                if (masterEx != null)
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined,
-                        size: 16, color: AppTheme.textSecondary),
-                    tooltip: 'Edit exercise details (name, instructions, equipment)',
-                    onPressed: () => _editMasterExercise(masterEx),
-                  ),
               ],
             ),
             if (masterEx != null) ...[
               const SizedBox(height: 2),
-              Text(
-                '${masterEx.primaryMuscle} • ${masterEx.equipment}',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textMuted,
+              InkWell(
+                borderRadius: BorderRadius.circular(4),
+                onTap: () => _editMasterExercise(masterEx),
+                child: Text(
+                  '${masterEx.primaryMuscle} • ${masterEx.equipment}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textMuted,
+                  ),
                 ),
               ),
             ],

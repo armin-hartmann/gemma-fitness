@@ -561,55 +561,43 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              ex.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () async {
+                      final updatedDto = await ExerciseEditDialog.show(
+                        context,
+                        initialExercise: ex,
+                      );
+                      if (updatedDto != null) {
+                        await widget.exerciseRepository.updateExercise(
+                          updatedDto.toCompanion(fallbackId: ex.id),
+                        );
+                        await vm.initialize();
+                      }
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ex.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
                           ),
-                          // Quick Edit Master Exercise button on live card
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined,
-                                size: 16, color: AppTheme.textSecondary),
-                            tooltip: 'Edit exercise definition',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () async {
-                              final updatedDto = await ExerciseEditDialog.show(
-                                context,
-                                initialExercise: ex,
-                              );
-                              if (updatedDto != null) {
-                                await widget.exerciseRepository.updateExercise(
-                                  updatedDto.toCompanion(fallbackId: ex.id),
-                                );
-                                await vm.initialize();
-                              }
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${ex.primaryMuscle} • ${ex.equipment}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          '${ex.primaryMuscle} • ${ex.equipment}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 PhaseBadge(
