@@ -5,18 +5,27 @@ import 'package:uuid/uuid.dart';
 import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/exercise_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
+import '../../../../data/services/audio_feedback_service.dart';
+import '../../../../data/services/cross_platform_voice_coach_service.dart';
 import '../../../../domain/engine/workout_metrics_engine.dart';
 import '../../../../domain/models/active_workout_models.dart';
+import '../../../../domain/services/voice_coach_service.dart';
 
 class ActiveWorkoutViewModel extends ChangeNotifier {
   ActiveWorkoutViewModel({
     required WorkoutRepository workoutRepository,
     required ExerciseRepository exerciseRepository,
+    AudioFeedbackService? audioFeedbackService,
+    VoiceCoachService? voiceCoachService,
   })  : _workoutRepo = workoutRepository,
-        _exerciseRepo = exerciseRepository;
+        _exerciseRepo = exerciseRepository,
+        _audioService = audioFeedbackService ?? AudioFeedbackService(),
+        _voiceCoach = voiceCoachService ?? CrossPlatformVoiceCoachService();
 
   final WorkoutRepository _workoutRepo;
   final ExerciseRepository _exerciseRepo;
+  final AudioFeedbackService _audioService;
+  final VoiceCoachService _voiceCoach;
   final _uuid = const Uuid();
 
   ActiveWorkoutSession? _currentSession;
@@ -27,11 +36,17 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   Timer? _sessionTimer;
   Duration _elapsedDuration = Duration.zero;
 
-  // Rest Interval Timer
+  // Smart Rest Interval Timer
   Timer? _restTimer;
   int _restSecondsRemaining = 0;
   int _targetRestDuration = 90;
   bool _isRestTimerActive = false;
+  bool _isRestPaused = false;
+
+  // Audio & Voice Coach Settings
+  bool _isVoiceCoachEnabled = true;
+  bool _isSoundEffectsEnabled = true;
+  bool _isAutoRestEnabled = true;
 
   // PR Celebrations
   final List<PersonalRecord> _sessionPRs = [];
@@ -47,11 +62,18 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   int get restSecondsRemaining => _restSecondsRemaining;
   int get targetRestDuration => _targetRestDuration;
   bool get isRestTimerActive => _isRestTimerActive;
+  bool get isRestPaused => _isRestPaused;
+
+  bool get isVoiceCoachEnabled => _isVoiceCoachEnabled;
+  bool get isSoundEffectsEnabled => _isSoundEffectsEnabled;
+  bool get isAutoRestEnabled => _isAutoRestEnabled;
+
   String get formattedRestRemaining {
     final m = _restSecondsRemaining ~/ 60;
     final s = _restSecondsRemaining % 60;
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
+
   double get restProgress => _targetRestDuration > 0
       ? (_restSecondsRemaining / _targetRestDuration).clamp(0.0, 1.0)
       : 0.0;
@@ -61,6 +83,19 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   double get currentVolume => _currentSession?.totalVolume ?? 0.0;
   int get completedSetsCount => _currentSession?.totalCompletedSets ?? 0;
   int get totalSetsCount => _currentSession?.totalSets ?? 0;
+
+  /// Returns the next pending exercise and set for preview during rest.
+  (ActiveSessionExercise?, WorkoutSet?) get nextUpcomingExerciseAndSet {
+    if (_currentSession == null) return (null, null);
+    for (final ex in _currentSession!.exercises) {
+      for (final s in ex.sets) {
+        if (!s.isCompleted) {
+          return (ex, s);
+        }
+      }
+    }
+    return (null, null);
+  }
 
   Future<void> initialize() async {
     _isLoading = true;
@@ -111,42 +146,48 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         ),
       );
 
-      final allExercises = await _exerciseRepo.getAllExercises();
+      for (int i = 0; i < preset.exercisePhases.length; i++) {
+        final presetItem = preset.exercisePhases[i];
+        final exercise = await _exerciseRepo.getExerciseByName(presetItem.exerciseName);
 
-      int order = 0;
-      for (final presetItem in preset.exercisePhases) {
-        final exercise = allExercises.firstWhere(
-          (e) => e.name.toLowerCase() == presetItem.exerciseName.toLowerCase(),
-          orElse: () => allExercises.first,
-        );
+        String exerciseId;
+        if (exercise == null) {
+          exerciseId = _uuid.v4();
+          await _exerciseRepo.insertExercise(
+            ExercisesCompanion.insert(
+              id: exerciseId,
+              name: presetItem.exerciseName,
+              category: 'General',
+              primaryMuscle: 'Full Body',
+              equipment: 'Bodyweight',
+              defaultPhase: Value(presetItem.phase),
+            ),
+          );
+        } else {
+          exerciseId = exercise.id;
+        }
 
         final sessionExerciseId = _uuid.v4();
         await _workoutRepo.insertSessionExercise(
           SessionExercisesCompanion.insert(
             id: sessionExerciseId,
             sessionId: sessionId,
-            exerciseId: exercise.id,
+            exerciseId: exerciseId,
             phase: Value(presetItem.phase),
-            orderInSession: Value(order++),
+            orderInSession: Value(i + 1),
           ),
         );
 
-        final targetWeight = presetItem.targetWeight;
-        final targetRpe = presetItem.targetRpe;
-
-        for (int setIdx = 1; setIdx <= presetItem.targetSets; setIdx++) {
+        for (int setNum = 1; setNum <= presetItem.targetSets; setNum++) {
           await _workoutRepo.insertWorkoutSet(
             WorkoutSetsCompanion.insert(
               id: _uuid.v4(),
               sessionExerciseId: sessionExerciseId,
-              setNumber: setIdx,
+              setNumber: setNum,
               setType: Value(presetItem.phase == 'warmup' ? 'warmup' : 'normal'),
-              weight: targetWeight != null
-                  ? Value(targetWeight)
-                  : const Value.absent(),
               reps: Value(presetItem.targetReps),
-              rpe: targetRpe != null
-                  ? Value(targetRpe)
+              weight: presetItem.targetWeight != null
+                  ? Value(presetItem.targetWeight!)
                   : const Value.absent(),
             ),
           );
@@ -159,6 +200,11 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       _startSessionTicker();
       _isLoading = false;
       notifyListeners();
+
+      if (_isVoiceCoachEnabled) {
+        _voiceCoach.speak('Workout started: ${preset.title}. Let\'s make it count!');
+      }
+
       return true;
     } catch (e) {
       _errorMessage = 'Failed to start preset workout: $e';
@@ -191,6 +237,11 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
       _startSessionTicker();
       _isLoading = false;
       notifyListeners();
+
+      if (_isVoiceCoachEnabled) {
+        _voiceCoach.speak('Quick workout started. Ready for your first exercise.');
+      }
+
       return true;
     } catch (e) {
       _errorMessage = 'Failed to start blank workout: $e';
@@ -263,10 +314,11 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         id: _uuid.v4(),
         sessionExerciseId: activeExercise.sessionExercise.id,
         setNumber: nextSetNum,
-        setType: Value(lastSet?.setType ?? 'normal'),
-        weight: lastSet?.weight != null ? Value(lastSet!.weight) : const Value.absent(),
-        reps: lastSet?.reps != null ? Value(lastSet!.reps) : const Value(10),
-        rpe: lastSet?.rpe != null ? Value(lastSet!.rpe) : const Value.absent(),
+        setType: Value(activeExercise.sessionExercise.phase == 'warmup'
+            ? 'warmup'
+            : 'normal'),
+        reps: Value(lastSet?.reps ?? 10),
+        weight: Value(lastSet?.weight ?? 0.0),
       ),
     );
 
@@ -294,7 +346,12 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
 
     // If toggled to completed, start rest timer automatically & check for PR
     if (isCompleted == true && !set.isCompleted) {
-      startRestTimer(_targetRestDuration);
+      if (_isSoundEffectsEnabled) {
+        _audioService.playButtonClick();
+      }
+      if (_isAutoRestEnabled) {
+        startRestTimer(_targetRestDuration);
+      }
       _checkForPR(set.sessionExerciseId, updated);
     }
 
@@ -325,6 +382,12 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     for (final pr in prs) {
       if (!_sessionPRs.any((p) => p.exerciseId == pr.exerciseId && p.type == pr.type)) {
         _sessionPRs.add(pr);
+        if (_isSoundEffectsEnabled) {
+          _audioService.playPrFanfare();
+        }
+        if (_isVoiceCoachEnabled) {
+          _voiceCoach.speak('Awesome! New Personal Record on ${se.exercise.name}!');
+        }
       }
     }
   }
@@ -336,76 +399,175 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // REST TIMER
-  void startRestTimer([int durationSeconds = 90]) {
-    _targetRestDuration = durationSeconds;
-    _restSecondsRemaining = durationSeconds;
+  // -------------------------------------------------------------
+  // SMART REST TIMER WITH AUDIO CUES & VOICE ANNOUNCER
+  // -------------------------------------------------------------
+  void startRestTimer([int? durationSeconds]) {
+    final duration = durationSeconds ?? _targetRestDuration;
+    _targetRestDuration = duration;
+    _restSecondsRemaining = duration;
     _isRestTimerActive = true;
+    _isRestPaused = false;
     _restTimer?.cancel();
 
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_isRestPaused) return;
+
       if (_restSecondsRemaining > 0) {
         _restSecondsRemaining--;
+        // Countdown ticks at 3s, 2s, 1s
+        if (_isSoundEffectsEnabled && _restSecondsRemaining <= 3 && _restSecondsRemaining > 0) {
+          _audioService.playCountdownTick(_restSecondsRemaining);
+        }
         notifyListeners();
       } else {
         _isRestTimerActive = false;
         timer.cancel();
+        _onRestCompleted();
         notifyListeners();
       }
     });
     notifyListeners();
   }
 
+  void _onRestCompleted() {
+    if (_isSoundEffectsEnabled) {
+      _audioService.playRestComplete();
+    }
+
+    if (_isVoiceCoachEnabled) {
+      final (nextEx, nextSet) = nextUpcomingExerciseAndSet;
+      if (nextEx != null && nextSet != null) {
+        final weightStr = nextSet.weight > 0
+            ? ' at ${nextSet.weight == nextSet.weight.roundToDouble() ? nextSet.weight.toInt() : nextSet.weight} kilograms'
+            : '';
+        _voiceCoach.speak('Rest complete. Up next: ${nextEx.exercise.name}, set ${nextSet.setNumber}, ${nextSet.reps} reps$weightStr.');
+      } else {
+        _voiceCoach.speak('Rest complete. All sets completed!');
+      }
+    }
+  }
+
   void addRestTime([int seconds = 30]) {
     _restSecondsRemaining += seconds;
     _targetRestDuration += seconds;
-    _isRestTimerActive = true;
+    if (!_isRestTimerActive) {
+      startRestTimer(_restSecondsRemaining);
+    } else {
+      notifyListeners();
+    }
+  }
+
+  void subtractRestTime([int seconds = 15]) {
+    if (_restSecondsRemaining > seconds) {
+      _restSecondsRemaining -= seconds;
+    } else {
+      _restSecondsRemaining = 1;
+    }
+    notifyListeners();
+  }
+
+  void togglePauseRest() {
+    _isRestPaused = !_isRestPaused;
     notifyListeners();
   }
 
   void skipRestTimer() {
     _restTimer?.cancel();
-    _restSecondsRemaining = 0;
     _isRestTimerActive = false;
+    _isRestPaused = false;
+    _restSecondsRemaining = 0;
     notifyListeners();
   }
 
-  /// Finishes the active workout session and saves completion timestamp.
-  Future<ActiveWorkoutSession?> finishWorkout({String? notes}) async {
+  // -------------------------------------------------------------
+  // AUDIO & VOICE COACH SETTINGS & ACTIONS
+  // -------------------------------------------------------------
+  void toggleVoiceCoach([bool? enabled]) {
+    _isVoiceCoachEnabled = enabled ?? !_isVoiceCoachEnabled;
+    notifyListeners();
+  }
+
+  void toggleSoundEffects([bool? enabled]) {
+    _isSoundEffectsEnabled = enabled ?? !_isSoundEffectsEnabled;
+    notifyListeners();
+  }
+
+  void toggleAutoRest([bool? enabled]) {
+    _isAutoRestEnabled = enabled ?? !_isAutoRestEnabled;
+    notifyListeners();
+  }
+
+  void setDefaultRestDuration(int seconds) {
+    _targetRestDuration = seconds;
+    notifyListeners();
+  }
+
+  Future<void> speakFormCues(Exercise exercise) async {
+    final cues = (exercise.instructions != null && exercise.instructions!.isNotEmpty)
+        ? exercise.instructions!
+        : 'Perform ${exercise.name} with controlled tempo, maintaining full range of motion.';
+    await _voiceCoach.speak('${exercise.name}. $cues');
+  }
+
+  Future<void> testAudioAndVoice() async {
+    if (_isSoundEffectsEnabled) {
+      _audioService.playRestComplete();
+    }
+    if (_isVoiceCoachEnabled) {
+      await _voiceCoach.speak('Voice coach connected. Audio cues are operational!');
+    }
+  }
+
+  // -------------------------------------------------------------
+  // WORKOUT COMPLETION & SUMMARY
+  // -------------------------------------------------------------
+  Future<ActiveWorkoutSession?> finishWorkout({String? customSummary}) async {
     if (_currentSession == null) return null;
 
-    final completedSession = _currentSession!;
-    final now = DateTime.now();
+    final sessionId = _currentSession!.session.id;
+    final endedAt = DateTime.now();
+
+    final summary = customSummary ??
+        WorkoutMetricsEngine.generateWorkoutSummary(
+          session: _currentSession!.session,
+          exercises: _currentSession!.exercises,
+          duration: _elapsedDuration,
+          prs: _sessionPRs,
+        );
 
     await _workoutRepo.completeSession(
-      completedSession.session.id,
-      dateEnded: now,
-      notes: notes ?? completedSession.session.notes,
+      sessionId,
+      dateEnded: endedAt,
+      aiSummary: summary,
     );
 
     _sessionTimer?.cancel();
     _restTimer?.cancel();
     _isRestTimerActive = false;
+
+    if (_isVoiceCoachEnabled) {
+      _voiceCoach.speak('Workout completed! Total volume ${currentVolume.toStringAsFixed(0)} kilograms across $completedSetsCount sets. Outstanding effort!');
+    }
+
+    final finishedSession = await _workoutRepo.getFullActiveSession(sessionId);
     _currentSession = null;
     _elapsedDuration = Duration.zero;
     notifyListeners();
-
-    return completedSession;
+    return finishedSession;
   }
 
-  /// Discards the active workout and deletes all unfinished records.
   Future<void> discardWorkout() async {
     if (_currentSession == null) return;
-
-    final id = _currentSession!.session.id;
-    await _workoutRepo.deleteSession(id);
-
+    final sessionId = _currentSession!.session.id;
     _sessionTimer?.cancel();
     _restTimer?.cancel();
     _isRestTimerActive = false;
+    _voiceCoach.stop();
+
+    await _workoutRepo.deleteSession(sessionId);
     _currentSession = null;
     _elapsedDuration = Duration.zero;
-    _sessionPRs.clear();
     notifyListeners();
   }
 
@@ -413,6 +575,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   void dispose() {
     _sessionTimer?.cancel();
     _restTimer?.cancel();
+    _voiceCoach.stop();
     super.dispose();
   }
 }

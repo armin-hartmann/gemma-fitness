@@ -186,4 +186,23 @@ class WorkoutMetricsEngine {
     }
     return '${weight.toStringAsFixed(1)} $unit';
   }
+
+  /// Generates a structured workout summary string based on completed exercises, volume, and PRs.
+  static String generateWorkoutSummary({
+    required WorkoutSession session,
+    required List<ActiveSessionExercise> exercises,
+    required Duration duration,
+    required List<PersonalRecord> prs,
+  }) {
+    final totalVol = calculateSessionVolume(
+        exercises.expand((e) => e.sets).toList());
+    final completedSets =
+        exercises.expand((e) => e.sets).where((s) => s.isCompleted).length;
+    final prText = prs.isNotEmpty
+        ? ' Achieved ${prs.length} new Personal Record${prs.length == 1 ? '' : 's'}!'
+        : '';
+    final durationStr = formatDuration(duration);
+
+    return 'Completed ${exercises.length} exercises across $completedSets sets with a total volume of ${totalVol.toStringAsFixed(0)} kg in $durationStr.$prText';
+  }
 }

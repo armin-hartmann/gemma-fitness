@@ -412,6 +412,10 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
                 const SizedBox(height: 14),
               ],
 
+              // Voice Coach & Audio Settings Toolbar
+              _buildAudioCoachBar(vm),
+              const SizedBox(height: 14),
+
               // Warmup section
               if (warmup.isNotEmpty) ...[
                 _buildPhaseHeader('🔥 Warm-up Phase', AppTheme.phaseWarmup),
@@ -613,6 +617,12 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
                   compact: true,
                   onPhaseChanged: (newPhase) => vm.updateExercisePhase(
                       activeEx.sessionExercise.id, newPhase),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.volume_up_rounded,
+                      size: 18, color: AppTheme.primaryLight),
+                  tooltip: 'Listen to form cues',
+                  onPressed: () => vm.speakFormCues(ex),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded,
@@ -841,65 +851,330 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
   }
 
   // -------------------------------------------------------------
+  // AUDIO & VOICE COACH TOOLBAR
+  // -------------------------------------------------------------
+  Widget _buildAudioCoachBar(ActiveWorkoutViewModel vm) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            // Voice Coach Toggle
+            InkWell(
+              onTap: () => vm.toggleVoiceCoach(),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: vm.isVoiceCoachEnabled
+                      ? AppTheme.primary.withAlpha(35)
+                      : AppTheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: vm.isVoiceCoachEnabled
+                        ? AppTheme.primary
+                        : AppTheme.cardBorder,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      vm.isVoiceCoachEnabled
+                          ? Icons.record_voice_over_rounded
+                          : Icons.voice_over_off_rounded,
+                      size: 16,
+                      color: vm.isVoiceCoachEnabled
+                          ? AppTheme.primary
+                          : AppTheme.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Voice Coach',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: vm.isVoiceCoachEnabled
+                            ? AppTheme.primary
+                            : AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Sound Effects Chimes Toggle
+            InkWell(
+              onTap: () => vm.toggleSoundEffects(),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: vm.isSoundEffectsEnabled
+                      ? AppTheme.accent.withAlpha(30)
+                      : AppTheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: vm.isSoundEffectsEnabled
+                        ? AppTheme.accent
+                        : AppTheme.cardBorder,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      vm.isSoundEffectsEnabled
+                          ? Icons.notifications_active_rounded
+                          : Icons.notifications_off_rounded,
+                      size: 16,
+                      color: vm.isSoundEffectsEnabled
+                          ? AppTheme.accent
+                          : AppTheme.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Chimes',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: vm.isSoundEffectsEnabled
+                            ? AppTheme.accent
+                            : AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Auto-Rest Duration Selector
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.timer_outlined, size: 16, color: AppTheme.textSecondary),
+                const SizedBox(width: 6),
+                DropdownButton<int>(
+                  value: vm.targetRestDuration,
+                  dropdownColor: AppTheme.surfaceElevated,
+                  underline: const SizedBox.shrink(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 45, child: Text('45s Rest')),
+                    DropdownMenuItem(value: 60, child: Text('60s Rest')),
+                    DropdownMenuItem(value: 90, child: Text('90s Rest')),
+                    DropdownMenuItem(value: 120, child: Text('120s Rest')),
+                    DropdownMenuItem(value: 180, child: Text('180s Rest')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) vm.setDefaultRestDuration(val);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+
+            // Test Button
+            IconButton(
+              icon: const Icon(Icons.volume_up_rounded, size: 18, color: AppTheme.textSecondary),
+              tooltip: 'Test Audio & Voice Coach',
+              onPressed: () => vm.testAudioAndVoice(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------
   // REST TIMER FLOATING BAR
   // -------------------------------------------------------------
   Widget _buildRestTimerBar(ActiveWorkoutViewModel vm) {
+    final (nextEx, nextSet) = vm.nextUpcomingExerciseAndSet;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primary, width: 1.5),
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: vm.restSecondsRemaining <= 5 ? Colors.amber : AppTheme.primary,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(100),
-            blurRadius: 16,
+            color: (vm.restSecondsRemaining <= 5 ? Colors.amber : AppTheme.primary)
+                .withAlpha(60),
+            blurRadius: 20,
             offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withAlpha(150),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer_rounded, color: AppTheme.primary, size: 22),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          Row(
             children: [
-              const Text(
-                'Rest Timer',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w600,
+              // Circular countdown ring
+              SizedBox(
+                width: 46,
+                height: 46,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: vm.restProgress,
+                      backgroundColor: AppTheme.surfaceElevated,
+                      color: vm.restSecondsRemaining <= 5
+                          ? Colors.amber
+                          : AppTheme.primary,
+                      strokeWidth: 4,
+                    ),
+                    Icon(
+                      vm.isRestPaused
+                          ? Icons.pause_rounded
+                          : (vm.restSecondsRemaining <= 5
+                              ? Icons.whatshot_rounded
+                              : Icons.timer_rounded),
+                      size: 20,
+                      color: vm.restSecondsRemaining <= 5
+                          ? Colors.amber
+                          : AppTheme.primary,
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                vm.formattedRestRemaining,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary,
+              const SizedBox(width: 14),
+
+              // Title and Big formatted timer text
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          vm.isRestPaused ? 'REST PAUSED' : 'REST INTERVAL',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: vm.isRestPaused
+                                ? Colors.amber
+                                : AppTheme.textSecondary,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        if (vm.isVoiceCoachEnabled) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.record_voice_over_rounded,
+                              size: 11, color: AppTheme.primaryLight),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      vm.formattedRestRemaining,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: vm.restSecondsRemaining <= 5
+                            ? Colors.amber
+                            : AppTheme.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+
+              // Quick adjustments and controls
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  side: const BorderSide(color: AppTheme.cardBorder),
+                ),
+                onPressed: () => vm.subtractRestTime(15),
+                child: const Text('-15s', style: TextStyle(fontSize: 12)),
+              ),
+              const SizedBox(width: 6),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: const Color(0xFF0F172A),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                onPressed: () => vm.addRestTime(30),
+                child: const Text('+30s',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+              const SizedBox(width: 6),
+              IconButton(
+                icon: Icon(
+                  vm.isRestPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                  color: AppTheme.textPrimary,
+                  size: 22,
+                ),
+                tooltip: vm.isRestPaused ? 'Resume Rest' : 'Pause Rest',
+                onPressed: () => vm.togglePauseRest(),
+              ),
+              IconButton(
+                icon: const Icon(Icons.skip_next_rounded,
+                    color: AppTheme.textSecondary, size: 22),
+                tooltip: 'Skip Rest',
+                onPressed: () => vm.skipRestTimer(),
               ),
             ],
           ),
-          const Spacer(),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              side: const BorderSide(color: AppTheme.primary),
+
+          // Next up preview snippet
+          if (nextEx != null && nextSet != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceElevated.withAlpha(140),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.arrow_forward_rounded,
+                      size: 13, color: AppTheme.primaryLight),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Next: ${nextEx.exercise.name} (Set ${nextSet.setNumber} · ${nextSet.reps} reps${nextSet.weight > 0 ? ' @ ${nextSet.weight == nextSet.weight.roundToDouble() ? nextSet.weight.toInt() : nextSet.weight}kg' : ''})',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            onPressed: () => vm.addRestTime(30),
-            child: const Text('+30s'),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.skip_next_rounded,
-                color: AppTheme.textSecondary),
-            tooltip: 'Skip Rest',
-            onPressed: () => vm.skipRestTimer(),
-          ),
+          ],
         ],
       ),
     );
