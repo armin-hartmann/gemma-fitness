@@ -7,7 +7,8 @@ import 'package:gemma_fitness/data/services/exercise_sync_service.dart';
 import 'package:gemma_fitness/data/services/gemini_exercise_service.dart';
 import 'package:gemma_fitness/main.dart';
 import 'package:gemma_fitness/ui/features/exercise_admin/view_models/exercise_admin_view_model.dart';
-
+import 'package:gemma_fitness/ui/features/workout_tracker/view_models/active_workout_view_model.dart';
+import 'package:gemma_fitness/ui/features/workout_tracker/view_models/workout_history_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -20,24 +21,36 @@ void main() {
     final syncService = ExerciseSyncService(exerciseRepository: exerciseRepo);
     final geminiService = GeminiExerciseService(apiKey: 'test');
 
-    final viewModel = ExerciseAdminViewModel(
+    final adminViewModel = ExerciseAdminViewModel(
       exerciseRepository: exerciseRepo,
       syncService: syncService,
       geminiService: geminiService,
     );
 
+    final activeWorkoutViewModel = ActiveWorkoutViewModel(
+      workoutRepository: workoutRepo,
+      exerciseRepository: exerciseRepo,
+    );
+
+    final historyViewModel = WorkoutHistoryViewModel(
+      workoutRepository: workoutRepo,
+    );
+
     await tester.pumpWidget(GemmaFitnessApp(
-      viewModel: viewModel,
+      exerciseAdminViewModel: adminViewModel,
+      activeWorkoutViewModel: activeWorkoutViewModel,
+      workoutHistoryViewModel: historyViewModel,
+      exerciseRepository: exerciseRepo,
       database: db,
       workoutRepository: workoutRepo,
     ));
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Gemma Fitness'), findsOneWidget);
-    expect(find.text('Master Exercise Library & Cloud Ingestion'), findsOneWidget);
-    expect(find.text('AI Ingest (Gemini)'), findsOneWidget);
-    expect(find.text('New Exercise'), findsOneWidget);
+    // Verify initial Workout tab is rendered with presets
+    expect(find.text('Ready to Train?'), findsOneWidget);
+    expect(find.text('Quick Empty Session'), findsOneWidget);
+    expect(find.text('Featured Workout Presets'), findsOneWidget);
 
     await db.close();
   });
