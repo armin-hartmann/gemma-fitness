@@ -78,14 +78,17 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
   }
 
   Widget _buildAppBar(ExerciseAdminViewModel vm) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isMobile = screenWidth < 600;
+
     return SliverAppBar(
       pinned: true,
-      expandedHeight: 70,
+      expandedHeight: isMobile ? 65 : 70,
       backgroundColor: AppTheme.background,
       title: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppTheme.primary, AppTheme.accent],
@@ -95,19 +98,19 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
             child: const Icon(
               Icons.fitness_center_rounded,
               color: Color(0xFF0F172A),
-              size: 20,
+              size: 18,
             ),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
+          const SizedBox(width: 10),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+                const Text(
                   'Gemma Fitness',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
                   ),
@@ -115,9 +118,9 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'Master Exercise Library & Cloud Ingestion',
-                  style: TextStyle(
-                    fontSize: 12,
+                  isMobile ? 'Exercise Library' : 'Master Exercise Library & Cloud Ingestion',
+                  style: const TextStyle(
+                    fontSize: 11,
                     color: AppTheme.textSecondary,
                     fontWeight: FontWeight.normal,
                   ),
@@ -130,28 +133,46 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
         ],
       ),
       actions: [
-        ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            foregroundColor: const Color(0xFF0F172A),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        if (isMobile) ...[
+          IconButton(
+            onPressed: () => GeminiIngestDialog.show(context, viewModel: vm),
+            icon: const Icon(Icons.auto_awesome_rounded, color: AppTheme.primary),
+            tooltip: 'AI Ingest (Gemini)',
           ),
-          onPressed: () => GeminiIngestDialog.show(context, viewModel: vm),
-          icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-          label: const Text('AI Ingest (Gemini)'),
-        ),
-        const SizedBox(width: 10),
-        OutlinedButton.icon(
-          onPressed: () async {
-            final dto = await ExerciseEditDialog.show(context);
-            if (dto != null) {
-              await vm.saveExercise(dto);
-            }
-          },
-          icon: const Icon(Icons.add_rounded, size: 18),
-          label: const Text('New Exercise'),
-        ),
-        const SizedBox(width: 10),
+          IconButton(
+            onPressed: () async {
+              final dto = await ExerciseEditDialog.show(context);
+              if (dto != null) {
+                await vm.saveExercise(dto);
+              }
+            },
+            icon: const Icon(Icons.add_rounded, color: AppTheme.textPrimary),
+            tooltip: 'New Exercise',
+          ),
+        ] else ...[
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: const Color(0xFF0F172A),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            onPressed: () => GeminiIngestDialog.show(context, viewModel: vm),
+            icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+            label: const Text('AI Ingest (Gemini)'),
+          ),
+          const SizedBox(width: 10),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final dto = await ExerciseEditDialog.show(context);
+              if (dto != null) {
+                await vm.saveExercise(dto);
+              }
+            },
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('New Exercise'),
+          ),
+        ],
+        const SizedBox(width: 4),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textPrimary),
           color: AppTheme.surfaceElevated,
@@ -546,27 +567,40 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
       );
     }
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isMobile = screenWidth < 600;
+
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 400,
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 14,
-          mainAxisExtent: 225,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final exercise = exercises[index];
-            return _buildExerciseCard(vm, exercise);
-          },
-          childCount: exercises.length,
-        ),
-      ),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
+      sliver: isMobile
+          ? SliverList.separated(
+              itemCount: exercises.length,
+              separatorBuilder: (ctx, i) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final exercise = exercises[index];
+                return _buildExerciseCard(vm, exercise, isMobile: true);
+              },
+            )
+          : SliverGrid(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 420,
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 14,
+                mainAxisExtent: 225,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final exercise = exercises[index];
+                  return _buildExerciseCard(vm, exercise, isMobile: false);
+                },
+                childCount: exercises.length,
+              ),
+            ),
     );
   }
 
-  Widget _buildExerciseCard(ExerciseAdminViewModel vm, Exercise exercise) {
+  Widget _buildExerciseCard(ExerciseAdminViewModel vm, Exercise exercise,
+      {bool isMobile = false}) {
     final isHomeBodyweight = !exercise.requiresEquipment ||
         exercise.equipment.toLowerCase() == 'bodyweight';
     final isFreeWeight = exercise.equipment.toLowerCase().contains('barbell') ||
@@ -576,6 +610,11 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: AppTheme.cardBorder),
+      ),
       child: InkWell(
         onTap: () async {
           final updatedDto = await ExerciseEditDialog.show(
@@ -590,20 +629,21 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
           padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: isMobile ? MainAxisSize.min : MainAxisSize.max,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
                       exercise.name,
                       style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
                         color: AppTheme.textPrimary,
+                        letterSpacing: -0.3,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -614,7 +654,7 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
-                runSpacing: 4,
+                runSpacing: 6,
                 children: [
                   // Equipment Requirement Badge
                   if (isHomeBodyweight)
@@ -640,22 +680,20 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                   _buildCardTag(Icons.category_outlined, exercise.category),
                 ],
               ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: (exercise.instructions != null &&
-                        exercise.instructions!.isNotEmpty)
-                    ? Text(
-                        exercise.instructions!,
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 12,
-                          height: 1.3,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    : const SizedBox.shrink(),
-              ),
+              if (exercise.instructions != null &&
+                  exercise.instructions!.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  exercise.instructions!,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                  maxLines: isMobile ? 3 : 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ],
           ),
         ),

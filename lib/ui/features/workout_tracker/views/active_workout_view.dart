@@ -199,24 +199,51 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 310,
-                    mainAxisExtent: 295,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                  ),
-                  itemCount: templates.length,
-                  itemBuilder: (context, index) {
-                    final preset = templates[index];
-                    return WorkoutPresetCard(
-                      preset: preset,
-                      onInspect: () => _openWorkoutDetail(preset),
-                      onStart: () => vm.startWorkoutFromPreset(preset),
-                      onDelete: () =>
-                          widget.templatesViewModel.deleteTemplate(preset.id),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 600;
+                    if (isMobile) {
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: templates.length,
+                        separatorBuilder: (ctx, i) => const SizedBox(height: 14),
+                        itemBuilder: (context, index) {
+                          final preset = templates[index];
+                          return SizedBox(
+                            height: 275,
+                            child: WorkoutPresetCard(
+                              preset: preset,
+                              onInspect: () => _openWorkoutDetail(preset),
+                              onStart: () => vm.startWorkoutFromPreset(preset),
+                              onDelete: () =>
+                                  widget.templatesViewModel.deleteTemplate(preset.id),
+                            ),
+                          );
+                        },
+                      );
+                    }
+
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 330,
+                        mainAxisExtent: 295,
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                      ),
+                      itemCount: templates.length,
+                      itemBuilder: (context, index) {
+                        final preset = templates[index];
+                        return WorkoutPresetCard(
+                          preset: preset,
+                          onInspect: () => _openWorkoutDetail(preset),
+                          onStart: () => vm.startWorkoutFromPreset(preset),
+                          onDelete: () =>
+                              widget.templatesViewModel.deleteTemplate(preset.id),
+                        );
+                      },
                     );
                   },
                 ),

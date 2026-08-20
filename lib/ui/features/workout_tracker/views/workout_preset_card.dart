@@ -84,15 +84,13 @@ class _WorkoutPresetCardState extends State<WorkoutPresetCard> {
                       Expanded(
                         child: Text(
                           preset.title,
-                          style: TextStyle(
-                            fontSize: 15,
+                          style: const TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: _isHovered
-                                ? AppTheme.textPrimary
-                                : AppTheme.textPrimary,
+                            color: AppTheme.textPrimary,
                             letterSpacing: -0.3,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
