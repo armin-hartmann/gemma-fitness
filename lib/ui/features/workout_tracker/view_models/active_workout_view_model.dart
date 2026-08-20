@@ -39,7 +39,8 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   // Smart Rest Interval Timer
   Timer? _restTimer;
   int _restSecondsRemaining = 0;
-  int _targetRestDuration = 90;
+  int _targetRestDuration = 60;
+  int _currentRestDuration = 60;
   bool _isRestTimerActive = false;
   bool _isRestPaused = false;
 
@@ -61,6 +62,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
 
   int get restSecondsRemaining => _restSecondsRemaining;
   int get targetRestDuration => _targetRestDuration;
+  int get currentRestDuration => _currentRestDuration;
   bool get isRestTimerActive => _isRestTimerActive;
   bool get isRestPaused => _isRestPaused;
 
@@ -74,8 +76,8 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  double get restProgress => _targetRestDuration > 0
-      ? (_restSecondsRemaining / _targetRestDuration).clamp(0.0, 1.0)
+  double get restProgress => _currentRestDuration > 0
+      ? (_restSecondsRemaining / _currentRestDuration).clamp(0.0, 1.0)
       : 0.0;
 
   List<PersonalRecord> get sessionPRs => List.unmodifiable(_sessionPRs);
@@ -350,7 +352,18 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
         _audioService.playButtonClick();
       }
       if (_isAutoRestEnabled) {
-        startRestTimer(_targetRestDuration);
+        final se = _currentSession?.exercises
+            .cast<ActiveSessionExercise?>()
+            .firstWhere(
+              (e) => e?.sessionExercise.id == set.sessionExerciseId,
+              orElse: () => null,
+            );
+        final phase = se?.sessionExercise.phase ?? 'working';
+        // 30s rest for warmup & cooldown, 60s for core/working workout
+        final restDuration = (phase == 'warmup' || phase == 'cooldown')
+            ? 30
+            : _targetRestDuration;
+        startRestTimer(restDuration);
       }
       _checkForPR(set.sessionExerciseId, updated);
     }
@@ -404,7 +417,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
   // -------------------------------------------------------------
   void startRestTimer([int? durationSeconds]) {
     final duration = durationSeconds ?? _targetRestDuration;
-    _targetRestDuration = duration;
+    _currentRestDuration = duration;
     _restSecondsRemaining = duration;
     _isRestTimerActive = true;
     _isRestPaused = false;
@@ -450,7 +463,7 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
 
   void addRestTime([int seconds = 30]) {
     _restSecondsRemaining += seconds;
-    _targetRestDuration += seconds;
+    _currentRestDuration += seconds;
     if (!_isRestTimerActive) {
       startRestTimer(_restSecondsRemaining);
     } else {
@@ -527,12 +540,15 @@ class ActiveWorkoutViewModel extends ChangeNotifier {
 
     final sessionId = _currentSession!.session.id;
     final endedAt = DateTime.now();
+    final duration = _elapsedDuration.inSeconds > 0
+        ? _elapsedDuration
+        : endedAt.difference(_currentSession!.session.dateStarted);
 
     final summary = customSummary ??
         WorkoutMetricsEngine.generateWorkoutSummary(
           session: _currentSession!.session,
           exercises: _currentSession!.exercises,
-          duration: _elapsedDuration,
+          duration: duration,
           prs: _sessionPRs,
         );
 

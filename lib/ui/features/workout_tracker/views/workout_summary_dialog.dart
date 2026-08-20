@@ -37,6 +37,8 @@ class WorkoutSummaryDialog extends StatelessWidget {
     final totalVol = session.totalVolume;
     final completedSets = session.totalCompletedSets;
     final totalSets = session.totalSets;
+    final actualDuration =
+        duration.inSeconds > 0 ? duration : session.totalDuration;
     final muscleStats =
         WorkoutMetricsEngine.calculateMuscleDistribution(session.exercises);
 
@@ -91,7 +93,7 @@ class WorkoutSummaryDialog extends StatelessWidget {
                       child: _buildSummaryMetric(
                         icon: Icons.timer_outlined,
                         label: 'Duration',
-                        value: WorkoutMetricsEngine.formatDuration(duration),
+                        value: WorkoutMetricsEngine.formatDuration(actualDuration),
                         color: AppTheme.primary,
                       ),
                     ),

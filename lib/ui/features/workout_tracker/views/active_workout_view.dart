@@ -407,13 +407,18 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             onPressed: () async {
+              final currentElapsed = vm.elapsedDuration;
+              final prs = List<PersonalRecord>.from(vm.sessionPRs);
               final finished = await vm.finishWorkout();
               if (finished != null && mounted) {
+                final displayDuration = currentElapsed.inSeconds > 0
+                    ? currentElapsed
+                    : finished.totalDuration;
                 WorkoutSummaryDialog.show(
                   context,
                   session: finished,
-                  duration: vm.elapsedDuration,
-                  personalRecords: vm.sessionPRs,
+                  duration: displayDuration,
+                  personalRecords: prs,
                 );
               }
             },
@@ -713,7 +718,8 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
             const Divider(color: AppTheme.cardBorder, height: 16),
 
             // Sets Rows
-            ...activeEx.sets.map((set) => _buildSetRow(vm, set)),
+            ...activeEx.sets.asMap().entries.map((entry) =>
+                _buildSetRow(vm, activeEx, entry.key, entry.value)),
             const SizedBox(height: 8),
 
             // Add Set Button
@@ -731,8 +737,15 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
     );
   }
 
-  Widget _buildSetRow(ActiveWorkoutViewModel vm, WorkoutSet set) {
+  Widget _buildSetRow(
+    ActiveWorkoutViewModel vm,
+    ActiveSessionExercise activeEx,
+    int setIndex,
+    WorkoutSet set,
+  ) {
     final isDone = set.isCompleted;
+    final canComplete =
+        setIndex == 0 || activeEx.sets[setIndex - 1].isCompleted;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -851,11 +864,34 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
               icon: Icon(
                 isDone
                     ? Icons.check_box_rounded
-                    : Icons.check_box_outline_blank_rounded,
-                color: isDone ? AppTheme.accent : AppTheme.textMuted,
-                size: 24,
+                    : (canComplete
+                        ? Icons.check_box_outline_blank_rounded
+                        : Icons.lock_outline_rounded),
+                color: isDone
+                    ? AppTheme.accent
+                    : (canComplete
+                        ? AppTheme.textMuted
+                        : AppTheme.textMuted.withAlpha(80)),
+                size: canComplete || isDone ? 24 : 20,
               ),
+              tooltip: isDone
+                  ? 'Mark set incomplete'
+                  : (canComplete
+                      ? 'Complete set'
+                      : 'Complete Set ${set.setNumber - 1} first'),
               onPressed: () {
+                if (!isDone && !canComplete) {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          'Please complete Set ${set.setNumber - 1} before finishing Set ${set.setNumber}.'),
+                      backgroundColor: Colors.amber.shade900,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
                 vm.updateSet(set, isCompleted: !isDone);
               },
             ),
@@ -865,9 +901,6 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
     );
   }
 
-  // -------------------------------------------------------------
-  // AUDIO & VOICE COACH TOOLBAR
-  // -------------------------------------------------------------
   Widget _buildAudioCoachBar(ActiveWorkoutViewModel vm) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -988,6 +1021,7 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
                     color: AppTheme.textPrimary,
                   ),
                   items: const [
+                    DropdownMenuItem(value: 30, child: Text('30s Rest')),
                     DropdownMenuItem(value: 45, child: Text('45s Rest')),
                     DropdownMenuItem(value: 60, child: Text('60s Rest')),
                     DropdownMenuItem(value: 90, child: Text('90s Rest')),

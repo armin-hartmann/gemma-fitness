@@ -105,6 +105,13 @@ class ActiveWorkoutSession {
   double get totalVolume => allSets
       .where((s) => s.isCompleted && s.weight > 0 && s.reps > 0)
       .fold(0.0, (acc, s) => acc + (s.weight * s.reps));
+
+  Duration get totalDuration {
+    if (session.dateEnded != null) {
+      return session.dateEnded!.difference(session.dateStarted);
+    }
+    return DateTime.now().difference(session.dateStarted);
+  }
 }
 
 class WorkoutPreset {

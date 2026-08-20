@@ -194,6 +194,29 @@ void main() {
       expect(mockVoice.speechLogs.any((l) => l.contains('Workout completed')), isTrue);
     });
 
+    test('Rest timer triggers 30s for warmup/cooldown and 60s for working sets', () async {
+      await viewModel.startBlankWorkout(title: 'Phase Rest Test');
+      final exercises = await exerciseRepo.getAllExercises();
+      final warmupEx = exercises.first;
+      final workingEx = exercises.last;
+
+      // Add warmup exercise and complete set
+      await viewModel.addExerciseToSession(warmupEx, phase: 'warmup');
+      final warmupSet = viewModel.currentSession!.exercises.first.sets.first;
+      await viewModel.updateSet(warmupSet, isCompleted: true);
+
+      expect(viewModel.isRestTimerActive, isTrue);
+      expect(viewModel.restSecondsRemaining, 30); // 30s for warmup!
+
+      // Add working exercise and complete set
+      await viewModel.addExerciseToSession(workingEx, phase: 'working');
+      final workingSet = viewModel.currentSession!.exercises.last.sets.first;
+      await viewModel.updateSet(workingSet, isCompleted: true);
+
+      expect(viewModel.isRestTimerActive, isTrue);
+      expect(viewModel.restSecondsRemaining, 60); // 60s for working/core!
+    });
+
     test('Can discard active workout', () async {
       await viewModel.startBlankWorkout(title: 'Discard Test');
       expect(viewModel.hasActiveWorkout, isTrue);
