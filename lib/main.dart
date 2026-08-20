@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'data/database/app_database.dart';
 import 'data/repositories/exercise_repository.dart';
 import 'data/repositories/workout_repository.dart';
+import 'data/repositories/workout_template_repository.dart';
 import 'data/services/exercise_sync_service.dart';
 import 'data/services/gemini_exercise_service.dart';
 import 'data/services/settings_service.dart';
@@ -10,6 +11,7 @@ import 'ui/core/theme/app_theme.dart';
 import 'ui/features/exercise_admin/view_models/exercise_admin_view_model.dart';
 import 'ui/features/workout_tracker/view_models/active_workout_view_model.dart';
 import 'ui/features/workout_tracker/view_models/workout_history_view_model.dart';
+import 'ui/features/workout_tracker/view_models/workout_templates_view_model.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +20,7 @@ void main() {
   final database = AppDatabase();
   final exerciseRepository = ExerciseRepository(database);
   final workoutRepository = WorkoutRepository(database);
+  final workoutTemplateRepository = WorkoutTemplateRepository();
 
   // Services
   final settingsService = SettingsService();
@@ -41,10 +44,15 @@ void main() {
     workoutRepository: workoutRepository,
   );
 
+  final workoutTemplatesViewModel = WorkoutTemplatesViewModel(
+    templateRepository: workoutTemplateRepository,
+  );
+
   runApp(GemmaFitnessApp(
     exerciseAdminViewModel: exerciseAdminViewModel,
     activeWorkoutViewModel: activeWorkoutViewModel,
     workoutHistoryViewModel: workoutHistoryViewModel,
+    workoutTemplatesViewModel: workoutTemplatesViewModel,
     exerciseRepository: exerciseRepository,
     database: database,
     workoutRepository: workoutRepository,
@@ -57,6 +65,7 @@ class GemmaFitnessApp extends StatelessWidget {
     required this.exerciseAdminViewModel,
     required this.activeWorkoutViewModel,
     required this.workoutHistoryViewModel,
+    required this.workoutTemplatesViewModel,
     required this.exerciseRepository,
     required this.database,
     required this.workoutRepository,
@@ -65,6 +74,7 @@ class GemmaFitnessApp extends StatelessWidget {
   final ExerciseAdminViewModel exerciseAdminViewModel;
   final ActiveWorkoutViewModel activeWorkoutViewModel;
   final WorkoutHistoryViewModel workoutHistoryViewModel;
+  final WorkoutTemplatesViewModel workoutTemplatesViewModel;
   final ExerciseRepository exerciseRepository;
   final AppDatabase database;
   final WorkoutRepository workoutRepository;
@@ -79,6 +89,7 @@ class GemmaFitnessApp extends StatelessWidget {
         exerciseAdminViewModel: exerciseAdminViewModel,
         activeWorkoutViewModel: activeWorkoutViewModel,
         workoutHistoryViewModel: workoutHistoryViewModel,
+        workoutTemplatesViewModel: workoutTemplatesViewModel,
         exerciseRepository: exerciseRepository,
       ),
     );

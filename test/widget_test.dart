@@ -3,12 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gemma_fitness/data/database/app_database.dart';
 import 'package:gemma_fitness/data/repositories/exercise_repository.dart';
 import 'package:gemma_fitness/data/repositories/workout_repository.dart';
+import 'package:gemma_fitness/data/repositories/workout_template_repository.dart';
 import 'package:gemma_fitness/data/services/exercise_sync_service.dart';
 import 'package:gemma_fitness/data/services/gemini_exercise_service.dart';
 import 'package:gemma_fitness/main.dart';
 import 'package:gemma_fitness/ui/features/exercise_admin/view_models/exercise_admin_view_model.dart';
 import 'package:gemma_fitness/ui/features/workout_tracker/view_models/active_workout_view_model.dart';
 import 'package:gemma_fitness/ui/features/workout_tracker/view_models/workout_history_view_model.dart';
+import 'package:gemma_fitness/ui/features/workout_tracker/view_models/workout_templates_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -18,6 +20,7 @@ void main() {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final exerciseRepo = ExerciseRepository(db);
     final workoutRepo = WorkoutRepository(db);
+    final templateRepo = WorkoutTemplateRepository();
     final syncService = ExerciseSyncService(exerciseRepository: exerciseRepo);
     final geminiService = GeminiExerciseService(apiKey: 'test');
 
@@ -36,10 +39,15 @@ void main() {
       workoutRepository: workoutRepo,
     );
 
+    final templatesViewModel = WorkoutTemplatesViewModel(
+      templateRepository: templateRepo,
+    );
+
     await tester.pumpWidget(GemmaFitnessApp(
       exerciseAdminViewModel: adminViewModel,
       activeWorkoutViewModel: activeWorkoutViewModel,
       workoutHistoryViewModel: historyViewModel,
+      workoutTemplatesViewModel: templatesViewModel,
       exerciseRepository: exerciseRepo,
       database: db,
       workoutRepository: workoutRepo,
@@ -50,7 +58,7 @@ void main() {
     // Verify initial Workout tab is rendered with presets
     expect(find.text('Ready to Train?'), findsOneWidget);
     expect(find.text('Quick Empty Session'), findsOneWidget);
-    expect(find.text('Featured Workout Presets'), findsOneWidget);
+    expect(find.text('Workout Routines'), findsOneWidget);
 
     await db.close();
   });

@@ -4,6 +4,7 @@ import '../../features/exercise_admin/view_models/exercise_admin_view_model.dart
 import '../../features/exercise_admin/views/exercise_admin_view.dart';
 import '../../features/workout_tracker/view_models/active_workout_view_model.dart';
 import '../../features/workout_tracker/view_models/workout_history_view_model.dart';
+import '../../features/workout_tracker/view_models/workout_templates_view_model.dart';
 import '../../features/workout_tracker/views/active_workout_view.dart';
 import '../../features/workout_tracker/views/workout_history_view.dart';
 import '../theme/app_theme.dart';
@@ -14,12 +15,14 @@ class AppShell extends StatefulWidget {
     required this.exerciseAdminViewModel,
     required this.activeWorkoutViewModel,
     required this.workoutHistoryViewModel,
+    required this.workoutTemplatesViewModel,
     required this.exerciseRepository,
   });
 
   final ExerciseAdminViewModel exerciseAdminViewModel;
   final ActiveWorkoutViewModel activeWorkoutViewModel;
   final WorkoutHistoryViewModel workoutHistoryViewModel;
+  final WorkoutTemplatesViewModel workoutTemplatesViewModel;
   final ExerciseRepository exerciseRepository;
 
   @override
@@ -39,6 +42,7 @@ class _AppShellState extends State<AppShell> {
           ActiveWorkoutView(
             viewModel: widget.activeWorkoutViewModel,
             exerciseRepository: widget.exerciseRepository,
+            templatesViewModel: widget.workoutTemplatesViewModel,
           ),
           ExerciseAdminView(
             viewModel: widget.exerciseAdminViewModel,
@@ -97,7 +101,8 @@ class _AppShellState extends State<AppShell> {
                     ),
                   ],
                 ),
-                const VerticalDivider(thickness: 1, width: 1, color: AppTheme.cardBorder),
+                const VerticalDivider(
+                    thickness: 1, width: 1, color: AppTheme.cardBorder),
                 Expanded(child: screens[_currentIndex]),
               ],
             ),
