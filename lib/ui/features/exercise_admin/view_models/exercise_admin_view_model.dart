@@ -26,6 +26,7 @@ class ExerciseAdminViewModel extends ChangeNotifier {
   String? _selectedCategory;
   String? _selectedMuscle;
   String? _selectedPhase;
+  String? _selectedEquipmentFilter; // 'no_equipment', 'free_weights', 'machines', null
 
   // Bulk Ingestion state
   List<ExerciseDto> _parsedIngestionResults = [];
@@ -39,6 +40,7 @@ class ExerciseAdminViewModel extends ChangeNotifier {
   String? get selectedCategory => _selectedCategory;
   String? get selectedMuscle => _selectedMuscle;
   String? get selectedPhase => _selectedPhase;
+  String? get selectedEquipmentFilter => _selectedEquipmentFilter;
   List<ExerciseDto> get parsedIngestionResults => _parsedIngestionResults;
 
   List<Exercise> get filteredExercises {
@@ -66,8 +68,35 @@ class ExerciseAdminViewModel extends ChangeNotifier {
       }
 
       // Phase filter
-      if (_selectedPhase != null && ex.defaultPhase.toLowerCase() != _selectedPhase!.toLowerCase()) {
+      if (_selectedPhase != null &&
+          ex.defaultPhase.toLowerCase() != _selectedPhase!.toLowerCase()) {
         return false;
+      }
+
+      // Equipment modality filter
+      if (_selectedEquipmentFilter != null) {
+        switch (_selectedEquipmentFilter) {
+          case 'no_equipment':
+            if (ex.requiresEquipment &&
+                ex.equipment.toLowerCase() != 'bodyweight') {
+              return false;
+            }
+            break;
+          case 'free_weights':
+            final eq = ex.equipment.toLowerCase();
+            if (!eq.contains('barbell') &&
+                !eq.contains('dumbbell') &&
+                !eq.contains('kettlebell')) {
+              return false;
+            }
+            break;
+          case 'machines':
+            final eq = ex.equipment.toLowerCase();
+            if (!eq.contains('machine') && !eq.contains('cable')) {
+              return false;
+            }
+            break;
+        }
       }
 
       return true;
@@ -81,6 +110,22 @@ class ExerciseAdminViewModel extends ChangeNotifier {
       _allExercises.where((e) => e.defaultPhase.toLowerCase() == 'working').length;
   int get cooldownCount =>
       _allExercises.where((e) => e.defaultPhase.toLowerCase() == 'cooldown').length;
+
+  int get noEquipmentCount => _allExercises
+      .where((e) => !e.requiresEquipment || e.equipment.toLowerCase() == 'bodyweight')
+      .length;
+
+  int get freeWeightsCount => _allExercises.where((e) {
+        final eq = e.equipment.toLowerCase();
+        return eq.contains('barbell') ||
+            eq.contains('dumbbell') ||
+            eq.contains('kettlebell');
+      }).length;
+
+  int get machinesCount => _allExercises.where((e) {
+        final eq = e.equipment.toLowerCase();
+        return eq.contains('machine') || eq.contains('cable');
+      }).length;
 
   List<String> get availableCategories {
     final set = _allExercises.map((e) => e.category).toSet();
@@ -101,6 +146,25 @@ class ExerciseAdminViewModel extends ChangeNotifier {
       await loadExercises();
     } catch (e) {
       _errorMessage = 'Failed to initialize exercises: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> reseedDatabase() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Clear and re-populate with latest seed catalog
+      final seeds = ExerciseSyncService.getCuratedMasterLibrary();
+      final companions = seeds.map((dto) => dto.toCompanion()).toList();
+      await _exerciseRepo.bulkUpsertExercises(companions);
+      await loadExercises();
+      _statusMessage = 'Successfully seeded master catalog with ${companions.length} exercises.';
+    } catch (e) {
+      _errorMessage = 'Failed to reseed database: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -137,11 +201,18 @@ class ExerciseAdminViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setEquipmentFilter(String? filter) {
+    _selectedEquipmentFilter =
+        (_selectedEquipmentFilter == filter) ? null : filter;
+    notifyListeners();
+  }
+
   void resetFilters() {
     _searchQuery = '';
     _selectedCategory = null;
     _selectedMuscle = null;
     _selectedPhase = null;
+    _selectedEquipmentFilter = null;
     notifyListeners();
   }
 

@@ -57,7 +57,9 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildStatsRow(vm),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
+                      _buildEquipmentFilterRow(vm),
+                      const SizedBox(height: 18),
                       _buildSearchAndFilters(vm),
                       const SizedBox(height: 16),
                       if (vm.statusMessage != null) _buildStatusBanner(vm),
@@ -127,7 +129,6 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
         ],
       ),
       actions: [
-        // AI Ingestion Action Button
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primary,
@@ -139,7 +140,6 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
           label: const Text('AI Ingest (Gemini)'),
         ),
         const SizedBox(width: 10),
-        // Add New Exercise Button
         OutlinedButton.icon(
           onPressed: () async {
             final dto = await ExerciseEditDialog.show(context);
@@ -151,7 +151,6 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
           label: const Text('New Exercise'),
         ),
         const SizedBox(width: 10),
-        // Sync / Export / Import Menu
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textPrimary),
           color: AppTheme.surfaceElevated,
@@ -168,7 +167,15 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                 );
               }
             } else if (value == 'reseed') {
-              await vm.initialize();
+              await vm.reseedDatabase();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Master catalog reseeded with updated home & free weight exercises!'),
+                    backgroundColor: AppTheme.accent,
+                  ),
+                );
+              }
             }
           },
           itemBuilder: (ctx) => [
@@ -188,7 +195,7 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                 children: [
                   Icon(Icons.restart_alt_rounded, size: 18, color: AppTheme.textSecondary),
                   SizedBox(width: 10),
-                  Text('Re-seed Default Library'),
+                  Text('Re-seed Library with Home & Free Weights'),
                 ],
               ),
             ),
@@ -205,7 +212,7 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
       child: Row(
         children: [
           StatChip(
-            label: 'All Exercises',
+            label: 'All Phases',
             count: vm.totalCount,
             icon: Icons.list_alt_rounded,
             color: AppTheme.primary,
@@ -244,6 +251,118 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
     );
   }
 
+  Widget _buildEquipmentFilterRow(ExerciseAdminViewModel vm) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          const Text(
+            'Modality: ',
+            style: TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 4),
+          _buildModalityPill(
+            vm,
+            id: null,
+            label: 'All Equipment',
+            count: vm.totalCount,
+            icon: Icons.all_inclusive_rounded,
+            activeColor: AppTheme.primary,
+          ),
+          const SizedBox(width: 8),
+          _buildModalityPill(
+            vm,
+            id: 'no_equipment',
+            label: '🏠 No Equipment (Home)',
+            count: vm.noEquipmentCount,
+            icon: Icons.home_rounded,
+            activeColor: AppTheme.accent,
+          ),
+          const SizedBox(width: 8),
+          _buildModalityPill(
+            vm,
+            id: 'free_weights',
+            label: '🏋️ Free Weights',
+            count: vm.freeWeightsCount,
+            icon: Icons.fitness_center_rounded,
+            activeColor: AppTheme.primary,
+          ),
+          const SizedBox(width: 8),
+          _buildModalityPill(
+            vm,
+            id: 'machines',
+            label: '⚙️ Machines & Cables',
+            count: vm.machinesCount,
+            icon: Icons.precision_manufacturing_rounded,
+            activeColor: AppTheme.phaseCooldown,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModalityPill(
+    ExerciseAdminViewModel vm, {
+    required String? id,
+    required String label,
+    required int count,
+    required IconData icon,
+    required Color activeColor,
+  }) {
+    final isSelected = vm.selectedEquipmentFilter == id;
+    return InkWell(
+      onTap: () => vm.setEquipmentFilter(id),
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor.withAlpha(45)
+              : AppTheme.surfaceElevated,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? activeColor : AppTheme.cardBorder,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: isSelected ? activeColor : AppTheme.cardBorder,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  color: isSelected ? const Color(0xFF0F172A) : AppTheme.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSearchAndFilters(ExerciseAdminViewModel vm) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,7 +374,7 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
                 controller: _searchController,
                 onChanged: vm.setSearchQuery,
                 decoration: InputDecoration(
-                  hintText: 'Search by exercise name, muscle, category, or equipment...',
+                  hintText: 'Search exercise name, muscle, category, or equipment...',
                   prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textMuted),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -272,6 +391,7 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
             if (vm.selectedCategory != null ||
                 vm.selectedMuscle != null ||
                 vm.selectedPhase != null ||
+                vm.selectedEquipmentFilter != null ||
                 vm.searchQuery.isNotEmpty) ...[
               const SizedBox(width: 10),
               TextButton.icon(
@@ -286,7 +406,6 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
           ],
         ),
         const SizedBox(height: 12),
-        // Filter pills for Categories & Muscles
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -374,7 +493,7 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Try adjusting search terms or filters, or ingest new exercises with Gemini AI.',
+                'Try adjusting your equipment modality, muscle filters, or search terms.',
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
               ),
             ],
@@ -390,7 +509,7 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
           maxCrossAxisExtent: 400,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          mainAxisExtent: 210,
+          mainAxisExtent: 225,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -404,6 +523,12 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
   }
 
   Widget _buildExerciseCard(ExerciseAdminViewModel vm, Exercise exercise) {
+    final isHomeBodyweight = !exercise.requiresEquipment ||
+        exercise.equipment.toLowerCase() == 'bodyweight';
+    final isFreeWeight = exercise.equipment.toLowerCase().contains('barbell') ||
+        exercise.equipment.toLowerCase().contains('dumbbell') ||
+        exercise.equipment.toLowerCase().contains('kettlebell');
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -436,10 +561,28 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
               spacing: 6,
               runSpacing: 4,
               children: [
-                _buildCardTag(Icons.category_outlined, exercise.category),
+                // Equipment Requirement Badge
+                if (isHomeBodyweight)
+                  _buildEquipmentTag(
+                    Icons.home_rounded,
+                    'No Equipment',
+                    AppTheme.accent,
+                  )
+                else if (isFreeWeight)
+                  _buildEquipmentTag(
+                    Icons.fitness_center_rounded,
+                    exercise.equipment,
+                    AppTheme.primary,
+                  )
+                else
+                  _buildEquipmentTag(
+                    Icons.precision_manufacturing_rounded,
+                    exercise.equipment,
+                    AppTheme.phaseCooldown,
+                  ),
                 _buildCardTag(
                     Icons.accessibility_new_outlined, exercise.primaryMuscle),
-                _buildCardTag(Icons.fitness_center_outlined, exercise.equipment),
+                _buildCardTag(Icons.category_outlined, exercise.category),
               ],
             ),
             const SizedBox(height: 8),
@@ -490,6 +633,32 @@ class _ExerciseAdminViewState extends State<ExerciseAdminView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEquipmentTag(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withAlpha(30),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withAlpha(90)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

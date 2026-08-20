@@ -24,12 +24,17 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forConnection(super.connection);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON;');
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(exercises, exercises.requiresEquipment);
+          }
         },
       );
 
@@ -38,6 +43,10 @@ class AppDatabase extends _$AppDatabase {
       name: 'gemma_fitness',
       native: const DriftNativeOptions(
         shareAcrossIsolates: true,
+      ),
+      web: DriftWebOptions(
+        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+        driftWorker: Uri.parse('drift_worker.js'),
       ),
     );
   }

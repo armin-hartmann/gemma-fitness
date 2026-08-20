@@ -22,14 +22,16 @@ void main() {
       expect(dto.equipment, 'Dumbbell');
       expect(dto.instructions, 'Press up at 30 degrees angle.');
       expect(dto.defaultPhase, 'working');
+      expect(dto.requiresEquipment, isTrue);
 
       final serialized = dto.toJson();
       expect(serialized['id'], 'ex-123');
       expect(serialized['name'], 'Incline Dumbbell Press');
       expect(serialized['primary_muscle'], 'Upper Chest');
+      expect(serialized['requires_equipment'], isTrue);
     });
 
-    test('Can convert to ExercisesCompanion with fallback UUID', () {
+    test('Can convert to ExercisesCompanion with fallback UUID and auto-detects bodyweight requiresEquipment as false', () {
       final dto = ExerciseDto(
         name: 'Pull-up',
         category: 'Strength',
@@ -38,11 +40,14 @@ void main() {
         defaultPhase: 'working',
       );
 
+      expect(dto.requiresEquipment, isFalse);
+
       final companion = dto.toCompanion();
       expect(companion.id.present, isTrue);
       expect(companion.name.value, 'Pull-up');
       expect(companion.primaryMuscle.value, 'Lats');
       expect(companion.defaultPhase.value, 'working');
+      expect(companion.requiresEquipment.value, isFalse);
     });
   });
 }

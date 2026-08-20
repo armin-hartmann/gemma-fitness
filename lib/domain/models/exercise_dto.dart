@@ -11,7 +11,9 @@ class ExerciseDto {
     required this.equipment,
     this.instructions,
     this.defaultPhase = 'working',
-  });
+    bool? requiresEquipment,
+  }) : requiresEquipment =
+            requiresEquipment ?? (equipment.trim().toLowerCase() != 'bodyweight');
 
   final String? id;
   final String name;
@@ -20,8 +22,13 @@ class ExerciseDto {
   final String equipment;
   final String? instructions;
   final String defaultPhase;
+  final bool requiresEquipment;
 
   factory ExerciseDto.fromJson(Map<String, dynamic> json) {
+    final equip = json['equipment'] as String? ?? 'Bodyweight';
+    final explicitReq = json['requires_equipment'] as bool? ??
+        json['requiresEquipment'] as bool?;
+
     return ExerciseDto(
       id: json['id'] as String?,
       name: json['name'] as String? ?? 'Unnamed Exercise',
@@ -29,11 +36,12 @@ class ExerciseDto {
       primaryMuscle: json['primary_muscle'] as String? ??
           json['primaryMuscle'] as String? ??
           'Full Body',
-      equipment: json['equipment'] as String? ?? 'Bodyweight',
+      equipment: equip,
       instructions: json['instructions'] as String?,
       defaultPhase: json['default_phase'] as String? ??
           json['defaultPhase'] as String? ??
           'working',
+      requiresEquipment: explicitReq ?? (equip.trim().toLowerCase() != 'bodyweight'),
     );
   }
 
@@ -46,6 +54,7 @@ class ExerciseDto {
       equipment: exercise.equipment,
       instructions: exercise.instructions,
       defaultPhase: exercise.defaultPhase,
+      requiresEquipment: exercise.requiresEquipment,
     );
   }
 
@@ -58,6 +67,7 @@ class ExerciseDto {
       'equipment': equipment,
       'instructions': instructions,
       'default_phase': defaultPhase,
+      'requires_equipment': requiresEquipment,
     };
   }
 
@@ -71,6 +81,7 @@ class ExerciseDto {
       equipment: Value(equipment),
       instructions: Value(instructions),
       defaultPhase: Value(defaultPhase),
+      requiresEquipment: Value(requiresEquipment),
     );
   }
 
@@ -82,6 +93,7 @@ class ExerciseDto {
     String? equipment,
     String? instructions,
     String? defaultPhase,
+    bool? requiresEquipment,
   }) {
     return ExerciseDto(
       id: id ?? this.id,
@@ -91,6 +103,7 @@ class ExerciseDto {
       equipment: equipment ?? this.equipment,
       instructions: instructions ?? this.instructions,
       defaultPhase: defaultPhase ?? this.defaultPhase,
+      requiresEquipment: requiresEquipment ?? this.requiresEquipment,
     );
   }
 }

@@ -87,6 +87,21 @@ class $ExercisesTable extends Exercises
     requiredDuringInsert: false,
     defaultValue: const Constant('working'),
   );
+  static const VerificationMeta _requiresEquipmentMeta = const VerificationMeta(
+    'requiresEquipment',
+  );
+  @override
+  late final GeneratedColumn<bool> requiresEquipment = GeneratedColumn<bool>(
+    'requires_equipment',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("requires_equipment" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -96,6 +111,7 @@ class $ExercisesTable extends Exercises
     equipment,
     instructions,
     defaultPhase,
+    requiresEquipment,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -167,6 +183,15 @@ class $ExercisesTable extends Exercises
         ),
       );
     }
+    if (data.containsKey('requires_equipment')) {
+      context.handle(
+        _requiresEquipmentMeta,
+        requiresEquipment.isAcceptableOrUnknown(
+          data['requires_equipment']!,
+          _requiresEquipmentMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -204,6 +229,10 @@ class $ExercisesTable extends Exercises
         DriftSqlType.string,
         data['${effectivePrefix}default_phase'],
       )!,
+      requiresEquipment: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}requires_equipment'],
+      )!,
     );
   }
 
@@ -221,6 +250,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
   final String equipment;
   final String? instructions;
   final String defaultPhase;
+  final bool requiresEquipment;
   const Exercise({
     required this.id,
     required this.name,
@@ -229,6 +259,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     required this.equipment,
     this.instructions,
     required this.defaultPhase,
+    required this.requiresEquipment,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -242,6 +273,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
       map['instructions'] = Variable<String>(instructions);
     }
     map['default_phase'] = Variable<String>(defaultPhase);
+    map['requires_equipment'] = Variable<bool>(requiresEquipment);
     return map;
   }
 
@@ -256,6 +288,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
           ? const Value.absent()
           : Value(instructions),
       defaultPhase: Value(defaultPhase),
+      requiresEquipment: Value(requiresEquipment),
     );
   }
 
@@ -272,6 +305,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
       equipment: serializer.fromJson<String>(json['equipment']),
       instructions: serializer.fromJson<String?>(json['instructions']),
       defaultPhase: serializer.fromJson<String>(json['defaultPhase']),
+      requiresEquipment: serializer.fromJson<bool>(json['requiresEquipment']),
     );
   }
   @override
@@ -285,6 +319,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
       'equipment': serializer.toJson<String>(equipment),
       'instructions': serializer.toJson<String?>(instructions),
       'defaultPhase': serializer.toJson<String>(defaultPhase),
+      'requiresEquipment': serializer.toJson<bool>(requiresEquipment),
     };
   }
 
@@ -296,6 +331,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     String? equipment,
     Value<String?> instructions = const Value.absent(),
     String? defaultPhase,
+    bool? requiresEquipment,
   }) => Exercise(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -304,6 +340,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     equipment: equipment ?? this.equipment,
     instructions: instructions.present ? instructions.value : this.instructions,
     defaultPhase: defaultPhase ?? this.defaultPhase,
+    requiresEquipment: requiresEquipment ?? this.requiresEquipment,
   );
   Exercise copyWithCompanion(ExercisesCompanion data) {
     return Exercise(
@@ -320,6 +357,9 @@ class Exercise extends DataClass implements Insertable<Exercise> {
       defaultPhase: data.defaultPhase.present
           ? data.defaultPhase.value
           : this.defaultPhase,
+      requiresEquipment: data.requiresEquipment.present
+          ? data.requiresEquipment.value
+          : this.requiresEquipment,
     );
   }
 
@@ -332,7 +372,8 @@ class Exercise extends DataClass implements Insertable<Exercise> {
           ..write('primaryMuscle: $primaryMuscle, ')
           ..write('equipment: $equipment, ')
           ..write('instructions: $instructions, ')
-          ..write('defaultPhase: $defaultPhase')
+          ..write('defaultPhase: $defaultPhase, ')
+          ..write('requiresEquipment: $requiresEquipment')
           ..write(')'))
         .toString();
   }
@@ -346,6 +387,7 @@ class Exercise extends DataClass implements Insertable<Exercise> {
     equipment,
     instructions,
     defaultPhase,
+    requiresEquipment,
   );
   @override
   bool operator ==(Object other) =>
@@ -357,7 +399,8 @@ class Exercise extends DataClass implements Insertable<Exercise> {
           other.primaryMuscle == this.primaryMuscle &&
           other.equipment == this.equipment &&
           other.instructions == this.instructions &&
-          other.defaultPhase == this.defaultPhase);
+          other.defaultPhase == this.defaultPhase &&
+          other.requiresEquipment == this.requiresEquipment);
 }
 
 class ExercisesCompanion extends UpdateCompanion<Exercise> {
@@ -368,6 +411,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
   final Value<String> equipment;
   final Value<String?> instructions;
   final Value<String> defaultPhase;
+  final Value<bool> requiresEquipment;
   final Value<int> rowid;
   const ExercisesCompanion({
     this.id = const Value.absent(),
@@ -377,6 +421,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     this.equipment = const Value.absent(),
     this.instructions = const Value.absent(),
     this.defaultPhase = const Value.absent(),
+    this.requiresEquipment = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ExercisesCompanion.insert({
@@ -387,6 +432,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     required String equipment,
     this.instructions = const Value.absent(),
     this.defaultPhase = const Value.absent(),
+    this.requiresEquipment = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -401,6 +447,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     Expression<String>? equipment,
     Expression<String>? instructions,
     Expression<String>? defaultPhase,
+    Expression<bool>? requiresEquipment,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -411,6 +458,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
       if (equipment != null) 'equipment': equipment,
       if (instructions != null) 'instructions': instructions,
       if (defaultPhase != null) 'default_phase': defaultPhase,
+      if (requiresEquipment != null) 'requires_equipment': requiresEquipment,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -423,6 +471,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     Value<String>? equipment,
     Value<String?>? instructions,
     Value<String>? defaultPhase,
+    Value<bool>? requiresEquipment,
     Value<int>? rowid,
   }) {
     return ExercisesCompanion(
@@ -433,6 +482,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
       equipment: equipment ?? this.equipment,
       instructions: instructions ?? this.instructions,
       defaultPhase: defaultPhase ?? this.defaultPhase,
+      requiresEquipment: requiresEquipment ?? this.requiresEquipment,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -461,6 +511,9 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
     if (defaultPhase.present) {
       map['default_phase'] = Variable<String>(defaultPhase.value);
     }
+    if (requiresEquipment.present) {
+      map['requires_equipment'] = Variable<bool>(requiresEquipment.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -477,6 +530,7 @@ class ExercisesCompanion extends UpdateCompanion<Exercise> {
           ..write('equipment: $equipment, ')
           ..write('instructions: $instructions, ')
           ..write('defaultPhase: $defaultPhase, ')
+          ..write('requiresEquipment: $requiresEquipment, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1830,6 +1884,7 @@ typedef $$ExercisesTableCreateCompanionBuilder =
       required String equipment,
       Value<String?> instructions,
       Value<String> defaultPhase,
+      Value<bool> requiresEquipment,
       Value<int> rowid,
     });
 typedef $$ExercisesTableUpdateCompanionBuilder =
@@ -1841,6 +1896,7 @@ typedef $$ExercisesTableUpdateCompanionBuilder =
       Value<String> equipment,
       Value<String?> instructions,
       Value<String> defaultPhase,
+      Value<bool> requiresEquipment,
       Value<int> rowid,
     });
 
@@ -1913,6 +1969,11 @@ class $$ExercisesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get requiresEquipment => $composableBuilder(
+    column: $table.requiresEquipment,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> sessionExercisesRefs(
     Expression<bool> Function($$SessionExercisesTableFilterComposer f) f,
   ) {
@@ -1982,6 +2043,11 @@ class $$ExercisesTableOrderingComposer
     column: $table.defaultPhase,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get requiresEquipment => $composableBuilder(
+    column: $table.requiresEquipment,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ExercisesTableAnnotationComposer
@@ -2017,6 +2083,11 @@ class $$ExercisesTableAnnotationComposer
 
   GeneratedColumn<String> get defaultPhase => $composableBuilder(
     column: $table.defaultPhase,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get requiresEquipment => $composableBuilder(
+    column: $table.requiresEquipment,
     builder: (column) => column,
   );
 
@@ -2081,6 +2152,7 @@ class $$ExercisesTableTableManager
                 Value<String> equipment = const Value.absent(),
                 Value<String?> instructions = const Value.absent(),
                 Value<String> defaultPhase = const Value.absent(),
+                Value<bool> requiresEquipment = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ExercisesCompanion(
                 id: id,
@@ -2090,6 +2162,7 @@ class $$ExercisesTableTableManager
                 equipment: equipment,
                 instructions: instructions,
                 defaultPhase: defaultPhase,
+                requiresEquipment: requiresEquipment,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2101,6 +2174,7 @@ class $$ExercisesTableTableManager
                 required String equipment,
                 Value<String?> instructions = const Value.absent(),
                 Value<String> defaultPhase = const Value.absent(),
+                Value<bool> requiresEquipment = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ExercisesCompanion.insert(
                 id: id,
@@ -2110,6 +2184,7 @@ class $$ExercisesTableTableManager
                 equipment: equipment,
                 instructions: instructions,
                 defaultPhase: defaultPhase,
+                requiresEquipment: requiresEquipment,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

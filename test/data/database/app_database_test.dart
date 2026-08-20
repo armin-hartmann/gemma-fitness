@@ -84,6 +84,40 @@ void main() {
       final warmupExercises = await exerciseRepo.getExercisesByPhase('warmup');
       expect(warmupExercises.length, 1);
       expect(warmupExercises.first.name, 'Arm Circles');
+
+      final homeExercises =
+          await exerciseRepo.getExercisesByEquipmentRequirement(false);
+      expect(homeExercises.length, 0); // Default was true in manual insert without explicit value
+    });
+
+    test('Can query by requiresEquipment flag', () async {
+      final bw = ExercisesCompanion.insert(
+        id: uuid.v4(),
+        name: 'Standard Push-Up',
+        category: 'Strength',
+        primaryMuscle: 'Chest',
+        equipment: 'Bodyweight',
+        requiresEquipment: const Value(false),
+      );
+      final fw = ExercisesCompanion.insert(
+        id: uuid.v4(),
+        name: 'Dumbbell Bench Press',
+        category: 'Strength',
+        primaryMuscle: 'Chest',
+        equipment: 'Dumbbell',
+        requiresEquipment: const Value(true),
+      );
+
+      await exerciseRepo.bulkUpsertExercises([bw, fw]);
+
+      final noEquip =
+          await exerciseRepo.getExercisesByEquipmentRequirement(false);
+      expect(noEquip.length, 1);
+      expect(noEquip.first.name, 'Standard Push-Up');
+
+      final equipNeeded =
+          await exerciseRepo.getExercisesByEquipmentRequirement(true);
+      expect(equipNeeded.any((e) => e.name == 'Dumbbell Bench Press'), isTrue);
     });
 
     test('Can bulk upsert and update exercises', () async {

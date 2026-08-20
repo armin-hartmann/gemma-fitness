@@ -44,9 +44,10 @@ Each item in the array MUST strictly have the following fields:
 - "name": String (clear, standard exercise name)
 - "category": String (e.g. "Strength", "Hypertrophy", "Mobility", "Cardio", "Core", "Plyometrics")
 - "primary_muscle": String (e.g. "Chest", "Upper Back", "Lats", "Quads", "Hamstrings", "Glutes", "Shoulders", "Biceps", "Triceps", "Abs", "Calves")
-- "equipment": String (e.g. "Barbell", "Dumbbell", "Bodyweight", "Cable", "Machine", "Kettlebell", "Resistance Band", "Foam Roller")
+- "equipment": String (e.g. "Bodyweight", "Dumbbell", "Barbell", "Kettlebell", "Cable", "Machine", "Resistance Band", "Foam Roller")
 - "instructions": String (concise setup, execution steps, and form cues)
 - "default_phase": String (strictly one of: "warmup", "working", "cooldown")
+- "requires_equipment": Boolean (false for bodyweight/calisthenics/stretches requiring no apparatus; true for barbell, dumbbell, cable, machine, etc.)
 
 Return a JSON array of objects.
 '''),
@@ -95,7 +96,6 @@ $rawText
       } else if (decoded['data'] is List) {
         items = decoded['data'] as List;
       } else {
-        // Try to find any list in values
         final firstList = decoded.values.firstWhere(
           (v) => v is List,
           orElse: () => [decoded],

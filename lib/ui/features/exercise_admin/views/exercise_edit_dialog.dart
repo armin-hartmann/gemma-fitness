@@ -33,6 +33,7 @@ class _ExerciseEditDialogState extends State<ExerciseEditDialog> {
   late TextEditingController _equipmentController;
   late TextEditingController _instructionsController;
   late String _selectedPhase;
+  late bool _requiresEquipment;
 
   @override
   void initState() {
@@ -48,6 +49,15 @@ class _ExerciseEditDialogState extends State<ExerciseEditDialog> {
     _instructionsController =
         TextEditingController(text: init?.instructions ?? '');
     _selectedPhase = init?.defaultPhase ?? 'working';
+    _requiresEquipment = init?.requiresEquipment ??
+        (_equipmentController.text.trim().toLowerCase() != 'bodyweight');
+
+    _equipmentController.addListener(() {
+      final isBw = _equipmentController.text.trim().toLowerCase() == 'bodyweight';
+      if (isBw && _requiresEquipment) {
+        setState(() => _requiresEquipment = false);
+      }
+    });
   }
 
   @override
@@ -145,7 +155,7 @@ class _ExerciseEditDialogState extends State<ExerciseEditDialog> {
                           controller: _equipmentController,
                           decoration: const InputDecoration(
                             labelText: 'Equipment *',
-                            hintText: 'e.g. Barbell / Dumbbell',
+                            hintText: 'e.g. Bodyweight / Barbell / Dumbbell',
                           ),
                           validator: (v) => (v == null || v.trim().isEmpty)
                               ? 'Equipment required'
@@ -182,6 +192,66 @@ class _ExerciseEditDialogState extends State<ExerciseEditDialog> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Equipment Requirement Toggle
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceElevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.cardBorder),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              _requiresEquipment
+                                  ? Icons.fitness_center_rounded
+                                  : Icons.home_rounded,
+                              size: 18,
+                              color: _requiresEquipment
+                                  ? AppTheme.primary
+                                  : AppTheme.accent,
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _requiresEquipment
+                                      ? 'Requires Equipment'
+                                      : 'No Equipment (Home Friendly)',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  _requiresEquipment
+                                      ? 'Gym gear, weights, or machines needed'
+                                      : 'Bodyweight or zero equipment routine',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Switch(
+                          value: _requiresEquipment,
+                          activeTrackColor: AppTheme.primary,
+                          onChanged: (val) {
+                            setState(() => _requiresEquipment = val);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -229,6 +299,7 @@ class _ExerciseEditDialogState extends State<ExerciseEditDialog> {
             ? null
             : _instructionsController.text.trim(),
         defaultPhase: _selectedPhase,
+        requiresEquipment: _requiresEquipment,
       );
       Navigator.of(context).pop(dto);
     }

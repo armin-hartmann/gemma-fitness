@@ -9,6 +9,8 @@ class Exercises extends Table {
   TextColumn get equipment => text()();
   TextColumn get instructions => text().nullable()();
   TextColumn get defaultPhase => text().withDefault(const Constant('working'))();
+  BoolColumn get requiresEquipment =>
+      boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column> get primaryKey => {id};

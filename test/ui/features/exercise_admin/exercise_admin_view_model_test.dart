@@ -72,6 +72,48 @@ void main() {
       expect(viewModel.filteredExercises.length, viewModel.totalCount);
     });
 
+    test('Filters exercises by equipment modality (no equipment, free weights, machines)', () async {
+      await viewModel.initialize();
+
+      // Filter by No Equipment (Home)
+      viewModel.setEquipmentFilter('no_equipment');
+      expect(viewModel.filteredExercises.length, viewModel.noEquipmentCount);
+      expect(viewModel.noEquipmentCount, greaterThan(0));
+      expect(
+        viewModel.filteredExercises.every((e) =>
+            !e.requiresEquipment || e.equipment.toLowerCase() == 'bodyweight'),
+        isTrue,
+      );
+
+      // Filter by Free Weights
+      viewModel.setEquipmentFilter('free_weights');
+      expect(viewModel.filteredExercises.length, viewModel.freeWeightsCount);
+      expect(viewModel.freeWeightsCount, greaterThan(0));
+      expect(
+        viewModel.filteredExercises.every((e) {
+          final eq = e.equipment.toLowerCase();
+          return eq.contains('barbell') ||
+              eq.contains('dumbbell') ||
+              eq.contains('kettlebell');
+        }),
+        isTrue,
+      );
+
+      // Filter by Machines
+      viewModel.setEquipmentFilter('machines');
+      expect(viewModel.filteredExercises.length, viewModel.machinesCount);
+      expect(
+        viewModel.filteredExercises.every((e) {
+          final eq = e.equipment.toLowerCase();
+          return eq.contains('machine') || eq.contains('cable');
+        }),
+        isTrue,
+      );
+
+      viewModel.resetFilters();
+      expect(viewModel.filteredExercises.length, viewModel.totalCount);
+    });
+
     test('Can save new exercise, update, and delete', () async {
       await viewModel.initialize();
       final initialTotal = viewModel.totalCount;

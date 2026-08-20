@@ -32,6 +32,13 @@ class ExerciseRepository {
         .get();
   }
 
+  Future<List<Exercise>> getExercisesByEquipmentRequirement(
+      bool requiresEquipment) {
+    return (_db.select(_db.exercises)
+          ..where((tbl) => tbl.requiresEquipment.equals(requiresEquipment)))
+        .get();
+  }
+
   Future<void> insertExercise(ExercisesCompanion exercise) {
     return _db.into(_db.exercises).insert(exercise);
   }
