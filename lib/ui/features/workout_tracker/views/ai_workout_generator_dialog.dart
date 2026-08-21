@@ -65,6 +65,27 @@ class _AiWorkoutGeneratorDialogState extends State<AiWorkoutGeneratorDialog> {
     super.dispose();
   }
 
+  Future<void> _savePresetAndClose() async {
+    final saved = await _viewModel.saveGeneratedPreset();
+    if (saved != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Saved "${saved.title}" to routines!'),
+          backgroundColor: AppTheme.accent,
+        ),
+      );
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _savePresetAndStart() async {
+    final saved = await _viewModel.saveGeneratedPreset();
+    if (saved != null && mounted) {
+      Navigator.of(context).pop();
+      widget.onStartWorkout(saved);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -135,46 +156,54 @@ class _AiWorkoutGeneratorDialogState extends State<AiWorkoutGeneratorDialog> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppTheme.primary, AppTheme.accent],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Color(0xFF0F172A),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AI Workout Generator',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
-                        letterSpacing: -0.5,
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.primary, AppTheme.accent],
                       ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Designed by Gemini / Gemma based on your exact goals',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Color(0xFF0F172A),
+                      size: 22,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AI Workout Generator',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Designed by Gemini / Gemma for your goals',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.close_rounded,
@@ -344,21 +373,25 @@ class _AiWorkoutGeneratorDialogState extends State<AiWorkoutGeneratorDialog> {
               child: const Text('Cancel'),
             ),
             const SizedBox(width: 12),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: const Color(0xFF0F172A),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: const Color(0xFF0F172A),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-              ),
-              onPressed: () => _viewModel.generateWorkout(),
-              icon: const Icon(Icons.auto_awesome_rounded, size: 20),
-              label: const Text(
-                'Generate Routine with AI',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                onPressed: () => _viewModel.generateWorkout(),
+                icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                label: const Text(
+                  'Generate Routine',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ],
@@ -552,62 +585,103 @@ class _AiWorkoutGeneratorDialogState extends State<AiWorkoutGeneratorDialog> {
         const SizedBox(height: 16),
 
         // Actions
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            OutlinedButton.icon(
-              onPressed: () => _viewModel.generateWorkout(),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Regenerate'),
-            ),
-            Row(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 480;
+
+            if (isNarrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accent,
+                      foregroundColor: const Color(0xFF0F172A),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: _savePresetAndStart,
+                    icon: const Icon(Icons.play_arrow_rounded, size: 22),
+                    label: const Text(
+                      'Start Workout Now',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _viewModel.generateWorkout(),
+                          icon: const Icon(Icons.refresh_rounded, size: 16),
+                          label: const Text('Regenerate'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _savePresetAndClose,
+                          icon: const Icon(Icons.bookmark_add_rounded,
+                              size: 16),
+                          label: const Text(
+                            'Save Routine',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 OutlinedButton.icon(
-                  onPressed: () async {
-                    final saved = await _viewModel.saveGeneratedPreset();
-                    if (saved != null && mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Saved "${saved.title}" to your routines!'),
-                          backgroundColor: AppTheme.accent,
-                        ),
-                      );
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  icon: const Icon(Icons.bookmark_add_rounded, size: 18),
-                  label: const Text('Save to My Routines'),
+                  onPressed: () => _viewModel.generateWorkout(),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Regenerate'),
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accent,
-                    foregroundColor: const Color(0xFF0F172A),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 22, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _savePresetAndClose,
+                      icon: const Icon(Icons.bookmark_add_rounded, size: 18),
+                      label: const Text('Save to My Routines'),
                     ),
-                  ),
-                  onPressed: () async {
-                    final saved = await _viewModel.saveGeneratedPreset();
-                    if (saved != null && mounted) {
-                      Navigator.of(context).pop();
-                      widget.onStartWorkout(saved);
-                    }
-                  },
-                  icon: const Icon(Icons.play_arrow_rounded, size: 22),
-                  label: const Text(
-                    'Start Workout Now',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accent,
+                        foregroundColor: const Color(0xFF0F172A),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 22, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: _savePresetAndStart,
+                      icon: const Icon(Icons.play_arrow_rounded, size: 22),
+                      label: const Text(
+                        'Start Workout Now',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ],
     );
