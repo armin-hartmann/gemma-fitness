@@ -73,218 +73,256 @@ class _ExerciseEditDialogState extends State<ExerciseEditDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.initialExercise != null;
+    final screenHeight = MediaQuery.sizeOf(context).height;
 
     return Dialog(
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 550),
+        constraints: BoxConstraints(
+          maxWidth: 550,
+          maxHeight: screenHeight * 0.88,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        isEditing ? 'Edit Exercise' : 'New Master Exercise',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
+                  Expanded(
+                    child: Text(
+                      isEditing ? 'Edit Exercise' : 'New Master Exercise',
+                      style: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded,
-                            color: AppTheme.textSecondary),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Exercise Name *',
-                      hintText: 'e.g. Incline Dumbbell Press',
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Name is required'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _categoryController,
-                          decoration: const InputDecoration(
-                            labelText: 'Category *',
-                            hintText: 'e.g. Strength / Hypertrophy',
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Category required'
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _muscleController,
-                          decoration: const InputDecoration(
-                            labelText: 'Primary Muscle *',
-                            hintText: 'e.g. Chest / Back',
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Muscle required'
-                              : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _equipmentController,
-                          decoration: const InputDecoration(
-                            labelText: 'Equipment *',
-                            hintText: 'e.g. Bodyweight / Barbell / Dumbbell',
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Equipment required'
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedPhase,
-                          decoration: const InputDecoration(
-                            labelText: 'Default Phase',
-                          ),
-                          dropdownColor: AppTheme.surfaceElevated,
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'warmup',
-                              child: Text('🔥 Warm-up'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'working',
-                              child: Text('🏋️ Working Sets'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'cooldown',
-                              child: Text('🧘 Cool-down'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'versatile',
-                              child: Text('⚡ Versatile (Multi-Phase)'),
-                            ),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() => _selectedPhase = val);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Equipment Requirement Toggle
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceElevated,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.cardBorder),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              _requiresEquipment
-                                  ? Icons.fitness_center_rounded
-                                  : Icons.home_rounded,
-                              size: 18,
-                              color: _requiresEquipment
-                                  ? AppTheme.primary
-                                  : AppTheme.accent,
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _requiresEquipment
-                                      ? 'Requires Equipment'
-                                      : 'No Equipment (Home Friendly)',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  _requiresEquipment
-                                      ? 'Gym gear, weights, or machines needed'
-                                      : 'Bodyweight or zero equipment routine',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Switch(
-                          value: _requiresEquipment,
-                          activeTrackColor: AppTheme.primary,
-                          onChanged: (val) {
-                            setState(() => _requiresEquipment = val);
-                          },
-                        ),
-                      ],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _instructionsController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Instructions & Form Cues',
-                      hintText:
-                          'Setup, posture cues, range of motion, and breathing instructions...',
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: _submit,
-                        child: Text(isEditing ? 'Save Changes' : 'Create Exercise'),
-                      ),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded,
+                        color: AppTheme.textSecondary),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 12),
+              const Divider(color: AppTheme.cardBorder, height: 1),
+              const SizedBox(height: 12),
+
+              // Scrollable Form Fields
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Exercise Name *',
+                            hintText: 'e.g. Incline Dumbbell Press',
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Name is required'
+                              : null,
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _categoryController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Category *',
+                                  hintText: 'e.g. Strength',
+                                ),
+                                validator: (v) => (v == null || v.trim().isEmpty)
+                                    ? 'Category required'
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _muscleController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Primary Muscle *',
+                                  hintText: 'e.g. Chest',
+                                ),
+                                validator: (v) => (v == null || v.trim().isEmpty)
+                                    ? 'Muscle required'
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _equipmentController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Equipment *',
+                                  hintText: 'e.g. Barbell',
+                                ),
+                                validator: (v) => (v == null || v.trim().isEmpty)
+                                    ? 'Equipment required'
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _selectedPhase,
+                                decoration: const InputDecoration(
+                                  labelText: 'Default Phase',
+                                ),
+                                dropdownColor: AppTheme.surfaceElevated,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'warmup',
+                                    child: Text('🔥 Warm-up'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'working',
+                                    child: Text('🏋️ Working'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'cooldown',
+                                    child: Text('🧘 Cool-down'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'versatile',
+                                    child: Text('⚡ Versatile'),
+                                  ),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() => _selectedPhase = val);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Equipment Requirement Toggle
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceElevated,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.cardBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _requiresEquipment
+                                    ? Icons.fitness_center_rounded
+                                    : Icons.home_rounded,
+                                size: 18,
+                                color: _requiresEquipment
+                                    ? AppTheme.primary
+                                    : AppTheme.accent,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _requiresEquipment
+                                          ? 'Requires Equipment'
+                                          : 'Zero Equipment (Home)',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      _requiresEquipment
+                                          ? 'Gym gear, weights, or machines needed'
+                                          : 'Bodyweight routine',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Switch(
+                                value: _requiresEquipment,
+                                activeTrackColor: AppTheme.primary,
+                                onChanged: (val) {
+                                  setState(() => _requiresEquipment = val);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        TextFormField(
+                          controller: _instructionsController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Instructions & Form Cues',
+                            hintText:
+                                'Setup, posture cues, range of motion, and breathing instructions...',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+              const Divider(color: AppTheme.cardBorder, height: 1),
+              const SizedBox(height: 12),
+
+              // Bottom Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: const Color(0xFF0F172A),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                    ),
+                    onPressed: _submit,
+                    child: Text(
+                      isEditing ? 'Save Changes' : 'Create Exercise',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

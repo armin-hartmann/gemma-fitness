@@ -92,9 +92,12 @@ class _AiWorkoutGeneratorDialogState extends State<AiWorkoutGeneratorDialog> {
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 820),
+        constraints: BoxConstraints(
+          maxWidth: 720,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: ListenableBuilder(
             listenable: _viewModel,
             builder: (context, _) {

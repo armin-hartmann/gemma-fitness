@@ -111,21 +111,28 @@ class _ExercisePickerDialogState extends State<ExercisePickerDialog> {
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 650),
+        constraints: BoxConstraints(
+          maxWidth: 600,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Add Exercise to Workout',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                  const Expanded(
+                    child: Text(
+                      'Add Exercise to Workout',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   IconButton(

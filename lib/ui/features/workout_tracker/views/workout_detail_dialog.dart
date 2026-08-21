@@ -111,9 +111,12 @@ class _WorkoutDetailDialogState extends State<WorkoutDetailDialog> {
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 780),
+        constraints: BoxConstraints(
+          maxWidth: 680,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

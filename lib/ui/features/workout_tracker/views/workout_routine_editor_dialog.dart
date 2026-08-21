@@ -69,9 +69,12 @@ class _WorkoutRoutineEditorDialogState extends State<WorkoutRoutineEditorDialog>
       backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 720),
+        constraints: BoxConstraints(
+          maxWidth: 680,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Form(
             key: _formKey,
             child: Column(
@@ -80,12 +83,16 @@ class _WorkoutRoutineEditorDialogState extends State<WorkoutRoutineEditorDialog>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      isEditing ? 'Edit Workout Routine' : 'New Custom Routine',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                    Expanded(
+                      child: Text(
+                        isEditing ? 'Edit Workout Routine' : 'New Custom Routine',
+                        style: const TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     IconButton(
