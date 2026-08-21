@@ -905,147 +905,136 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
 
   Widget _buildAudioCoachBar(ActiveWorkoutViewModel vm) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.surfaceElevated,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.cardBorder),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            // Voice Coach Toggle
-            InkWell(
-              onTap: () => vm.toggleVoiceCoach(),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Voice Coach Toggle
+          InkWell(
+            onTap: () => vm.toggleVoiceCoach(),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: vm.isVoiceCoachEnabled
+                    ? AppTheme.primary.withAlpha(35)
+                    : AppTheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
                   color: vm.isVoiceCoachEnabled
-                      ? AppTheme.primary.withAlpha(35)
-                      : AppTheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
+                      ? AppTheme.primary
+                      : AppTheme.cardBorder,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    vm.isVoiceCoachEnabled
+                        ? Icons.record_voice_over_rounded
+                        : Icons.voice_over_off_rounded,
+                    size: 16,
                     color: vm.isVoiceCoachEnabled
                         ? AppTheme.primary
-                        : AppTheme.cardBorder,
+                        : AppTheme.textMuted,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      vm.isVoiceCoachEnabled
-                          ? Icons.record_voice_over_rounded
-                          : Icons.voice_over_off_rounded,
-                      size: 16,
+                  const SizedBox(width: 6),
+                  Text(
+                    'Voice Coach',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                       color: vm.isVoiceCoachEnabled
                           ? AppTheme.primary
                           : AppTheme.textMuted,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Voice Coach',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: vm.isVoiceCoachEnabled
-                            ? AppTheme.primary
-                            : AppTheme.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
+          ),
 
-            // Sound Effects Chimes Toggle
-            InkWell(
-              onTap: () => vm.toggleSoundEffects(),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
+          // Sound Effects Chimes Toggle
+          InkWell(
+            onTap: () => vm.toggleSoundEffects(),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: vm.isSoundEffectsEnabled
+                    ? AppTheme.accent.withAlpha(30)
+                    : AppTheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
                   color: vm.isSoundEffectsEnabled
-                      ? AppTheme.accent.withAlpha(30)
-                      : AppTheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
+                      ? AppTheme.accent
+                      : AppTheme.cardBorder,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    vm.isSoundEffectsEnabled
+                        ? Icons.notifications_active_rounded
+                        : Icons.notifications_off_rounded,
+                    size: 16,
                     color: vm.isSoundEffectsEnabled
                         ? AppTheme.accent
-                        : AppTheme.cardBorder,
+                        : AppTheme.textMuted,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      vm.isSoundEffectsEnabled
-                          ? Icons.notifications_active_rounded
-                          : Icons.notifications_off_rounded,
-                      size: 16,
+                  const SizedBox(width: 6),
+                  Text(
+                    'Chimes',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                       color: vm.isSoundEffectsEnabled
                           ? AppTheme.accent
                           : AppTheme.textMuted,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Chimes',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: vm.isSoundEffectsEnabled
-                            ? AppTheme.accent
-                            : AppTheme.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
+          ),
 
-            // Auto-Rest Duration Selector
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.timer_outlined, size: 16, color: AppTheme.textSecondary),
-                const SizedBox(width: 6),
-                DropdownButton<int>(
-                  value: vm.targetRestDuration,
-                  dropdownColor: AppTheme.surfaceElevated,
-                  underline: const SizedBox.shrink(),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 30, child: Text('30s Rest')),
-                    DropdownMenuItem(value: 45, child: Text('45s Rest')),
-                    DropdownMenuItem(value: 60, child: Text('60s Rest')),
-                    DropdownMenuItem(value: 90, child: Text('90s Rest')),
-                    DropdownMenuItem(value: 120, child: Text('120s Rest')),
-                    DropdownMenuItem(value: 180, child: Text('180s Rest')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) vm.setDefaultRestDuration(val);
-                  },
+          // Auto-Rest Duration Selector
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.timer_outlined,
+                  size: 15, color: AppTheme.textSecondary),
+              const SizedBox(width: 4),
+              DropdownButton<int>(
+                value: vm.targetRestDuration,
+                dropdownColor: AppTheme.surfaceElevated,
+                underline: const SizedBox.shrink(),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
                 ),
-              ],
-            ),
-            const SizedBox(width: 8),
-
-            // Test Button
-            IconButton(
-              icon: const Icon(Icons.volume_up_rounded, size: 18, color: AppTheme.textSecondary),
-              tooltip: 'Test Audio & Voice Coach',
-              onPressed: () => vm.testAudioAndVoice(),
-            ),
-          ],
-        ),
+                items: const [
+                  DropdownMenuItem(value: 30, child: Text('30s')),
+                  DropdownMenuItem(value: 45, child: Text('45s')),
+                  DropdownMenuItem(value: 60, child: Text('60s')),
+                  DropdownMenuItem(value: 90, child: Text('90s')),
+                  DropdownMenuItem(value: 120, child: Text('120s')),
+                  DropdownMenuItem(value: 180, child: Text('180s')),
+                ],
+                onChanged: (val) {
+                  if (val != null) vm.setDefaultRestDuration(val);
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
