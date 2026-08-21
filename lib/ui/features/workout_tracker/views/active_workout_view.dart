@@ -305,80 +305,77 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
       appBar: AppBar(
         backgroundColor: AppTheme.background,
         automaticallyImplyLeading: false,
+        titleSpacing: 16,
+        actionsPadding: const EdgeInsets.only(right: 16),
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
+            // Timer Box (designed with ample horizontal room to accommodate 1:23:45 and 10:45:55+)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              constraints: const BoxConstraints(minWidth: 84),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppTheme.primary.withAlpha(30),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppTheme.primary.withAlpha(90)),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.timer_outlined,
-                      size: 16, color: AppTheme.primary),
-                  const SizedBox(width: 6),
+                      size: 15, color: AppTheme.primary),
+                  const SizedBox(width: 5),
                   Text(
                     vm.formattedElapsed,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primary,
+                      fontFeatures: [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                session.session.notes ?? 'Active Workout',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            const SizedBox(width: 8),
+
+            // Volume chip
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceElevated,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.cardBorder),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.fitness_center_rounded,
+                      size: 13, color: AppTheme.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    vm.currentVolume > 0
+                        ? '${vm.currentVolume.toStringAsFixed(0)} kg'
+                        : 'BW Sets',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         actions: [
-          // Volume chip
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceElevated,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.cardBorder),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.fitness_center_rounded,
-                    size: 14, color: AppTheme.textSecondary),
-                const SizedBox(width: 6),
-                Text(
-                  vm.currentVolume > 0
-                      ? '${vm.currentVolume.toStringAsFixed(0)} kg'
-                      : 'BW Sets',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-
           // Discard menu
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded,
                 color: AppTheme.textSecondary),
             color: AppTheme.surfaceElevated,
+            tooltip: 'Workout Options',
             onSelected: (val) {
               if (val == 'discard') {
                 _confirmDiscard(vm);
@@ -399,14 +396,17 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
               ),
             ],
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
 
           // Finish Workout Button
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accent,
               foregroundColor: const Color(0xFF0F172A),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () async {
               final currentElapsed = vm.elapsedDuration;
@@ -425,18 +425,20 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
               }
             },
             icon: const Icon(Icons.check_rounded, size: 18),
-            label: const Text('Finish'),
+            label: const Text(
+              'Finish',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
           ),
-          const SizedBox(width: 16),
         ],
       ),
       body: Stack(
         children: [
           ListView(
             padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 14,
+              left: 16,
+              right: 16,
+              top: 12,
               bottom: 100,
             ),
             children: [
