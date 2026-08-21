@@ -73,9 +73,10 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
         final templates = widget.templatesViewModel.templates;
 
         return Scaffold(
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 LayoutBuilder(
@@ -250,10 +251,11 @@ class _ActiveWorkoutViewState extends State<ActiveWorkoutView> {
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   void _openWorkoutDetail(WorkoutPreset preset) {
     WorkoutDetailDialog.show(

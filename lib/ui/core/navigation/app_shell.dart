@@ -112,9 +112,12 @@ class _AppShellState extends State<AppShell> {
 
         // Mobile / Small Screen Layout
         return Scaffold(
-          body: IndexedStack(
-            index: _currentIndex,
-            children: screens,
+          body: SafeArea(
+            bottom: false,
+            child: IndexedStack(
+              index: _currentIndex,
+              children: screens,
+            ),
           ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _currentIndex,
