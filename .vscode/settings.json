@@ -1,0 +1,6 @@
+{
+  "dart.projectSearchDepth": 5,
+  "dart.flutterSdkPath": "/opt/homebrew/bin/flutter",
+  "dart.autoDetectFlutter": true,
+  "dart.checkForSdkUpdates": false
+}
