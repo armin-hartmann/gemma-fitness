@@ -67,6 +67,7 @@ class _WorkoutRoutineEditorDialogState extends State<WorkoutRoutineEditorDialog>
 
     return Dialog(
       backgroundColor: AppTheme.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -130,25 +131,30 @@ class _WorkoutRoutineEditorDialogState extends State<WorkoutRoutineEditorDialog>
                     Expanded(
                       flex: 2,
                       child: DropdownButtonFormField<String>(
+                        isExpanded: true,
                         initialValue: _selectedModality,
                         decoration: const InputDecoration(labelText: 'Modality'),
                         dropdownColor: AppTheme.surfaceElevated,
                         items: const [
                           DropdownMenuItem(
                             value: 'bodyweight',
-                            child: Text('🏠 No Equipment'),
+                            child: Text('🏠 No Equip',
+                                overflow: TextOverflow.ellipsis),
                           ),
                           DropdownMenuItem(
                             value: 'free_weights',
-                            child: Text('🏋️ Free Weights'),
+                            child: Text('🏋️ Weights',
+                                overflow: TextOverflow.ellipsis),
                           ),
                           DropdownMenuItem(
                             value: 'machines',
-                            child: Text('⚙️ Machines'),
+                            child: Text('⚙️ Machines',
+                                overflow: TextOverflow.ellipsis),
                           ),
                           DropdownMenuItem(
                             value: 'hybrid',
-                            child: Text('⚡ Hybrid / Mixed'),
+                            child: Text('⚡ Hybrid',
+                                overflow: TextOverflow.ellipsis),
                           ),
                         ],
                         onChanged: (val) {
